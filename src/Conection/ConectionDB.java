@@ -28,7 +28,9 @@ public class ConectionDB {
             
             System.out.println("Cambio en el repositorio local");
             
-            SSystem.out.println("Hola amor de mi vida");
+            System.out.println("Hola amor de mi vida");
+            
+            System.out.println("Argentina campeon del mundo 2026");
             
         }catch(SQLException e){
             //Manjer error
