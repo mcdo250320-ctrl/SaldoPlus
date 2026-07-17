@@ -28,7 +28,7 @@ public class ConectionDB {
             
             System.out.println("Cambio en el repositorio local");
             
-            SSystem.out.println("Hola amor de mi vida");
+            System.out.println("Hola amor de mi vida");
             
         }catch(SQLException e){
             //Manjer error
