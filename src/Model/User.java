@@ -14,22 +14,25 @@ public class User {
     private String nombre;
     private String usuario;
     private String pass;
-    private String fotoPerfil;
+    private String telefono;
     
     public User(){}
     
-    public User(String nombre, String usuario, String pass){
+    public User(String nombre, String usuario, String pass,String telefono){
         
         this.nombre = nombre;
         this.usuario = usuario;
         this.pass = pass;
+        this.telefono = telefono;
     }
     
-    public User(int id, String nombre, String usuario, String pass){
+    public User(int id, String nombre, String usuario, String pass, String telefono){
         
         this.nombre = nombre;
         this.usuario = usuario;
         this.pass = pass;
+        this.telefono = telefono;
+        
     } 
 
     public int getId() {
@@ -63,4 +66,14 @@ public class User {
     public void setPass(String pass) {
         this.pass = pass;
     }
+
+    public String getTelefono() {
+        return telefono;
+    }
+
+    public void setTelefono(String telefono) {
+        this.telefono = telefono;
+    }
+    
+    
 }

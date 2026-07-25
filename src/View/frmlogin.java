@@ -76,7 +76,9 @@ public class frmlogin extends javax.swing.JFrame {
         jLabel4.setFont(new java.awt.Font("Nirmala UI", 0, 18)); // NOI18N
         jLabel4.setText("Contraseña:");
 
+        bntiniciar.setBackground(new java.awt.Color(0, 51, 0));
         bntiniciar.setFont(new java.awt.Font("Nirmala UI", 0, 18)); // NOI18N
+        bntiniciar.setForeground(new java.awt.Color(255, 255, 255));
         bntiniciar.setText("Iniciar sesión");
         bntiniciar.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {

@@ -86,7 +86,7 @@ public class FRNRegistro extends javax.swing.JFrame {
         txtpass.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         txtpass.setBorder(null);
 
-        tbnregistro.setBackground(new java.awt.Color(4, 57, 36));
+        tbnregistro.setBackground(new java.awt.Color(0, 51, 0));
         tbnregistro.setFont(new java.awt.Font("Nirmala UI", 1, 18)); // NOI18N
         tbnregistro.setForeground(new java.awt.Color(255, 255, 255));
         tbnregistro.setText("Registrar");

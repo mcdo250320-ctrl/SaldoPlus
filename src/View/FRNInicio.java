@@ -33,8 +33,8 @@ public class FRNInicio extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
-        btminicio = new javax.swing.JButton();
-        btmregistro = new javax.swing.JButton();
+        btninicio = new javax.swing.JButton();
+        btnregistro = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setBackground(new java.awt.Color(4, 57, 36));
@@ -49,19 +49,18 @@ public class FRNInicio extends javax.swing.JFrame {
         jLabel3.setForeground(new java.awt.Color(255, 255, 255));
         jLabel3.setText("Bienvenido a Saldo+");
 
-        btminicio.setBackground(new java.awt.Color(48, 57, 4));
-        btminicio.setFont(new java.awt.Font("Nirmala UI", 0, 24)); // NOI18N
-        btminicio.setForeground(new java.awt.Color(255, 255, 255));
-        btminicio.setText("INICIAR SESION");
-        btminicio.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
-        btminicio.addActionListener(this::btminicioActionPerformed);
+        btninicio.setBackground(new java.awt.Color(0, 51, 0));
+        btninicio.setFont(new java.awt.Font("Nirmala UI", 1, 24)); // NOI18N
+        btninicio.setForeground(new java.awt.Color(255, 255, 255));
+        btninicio.setText("Iniciar Sesion");
+        btninicio.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        btninicio.addActionListener(this::btninicioActionPerformed);
 
-        btmregistro.setBackground(new java.awt.Color(48, 57, 4));
-        btmregistro.setFont(new java.awt.Font("Nirmala UI", 0, 24)); // NOI18N
-        btmregistro.setForeground(new java.awt.Color(255, 255, 255));
-        btmregistro.setText("REGISTRO");
-        btmregistro.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
-        btmregistro.addActionListener(this::btmregistroActionPerformed);
+        btnregistro.setBackground(new java.awt.Color(0, 51, 0));
+        btnregistro.setFont(new java.awt.Font("Nirmala UI", 1, 24)); // NOI18N
+        btnregistro.setForeground(new java.awt.Color(255, 255, 255));
+        btnregistro.setText("Registrarse");
+        btnregistro.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -71,20 +70,15 @@ public class FRNInicio extends javax.swing.JFrame {
                 .addComponent(jLabel1)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jLabel3))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(66, 66, 66)
-                                .addComponent(jLabel2)))
-                        .addGap(0, 115, Short.MAX_VALUE))
+                        .addGap(84, 84, 84)
+                        .addComponent(jLabel2))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(39, 39, 39)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(btminicio, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(btmregistro, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(btninicio, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(btnregistro, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                .addContainerGap(44, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -96,10 +90,10 @@ public class FRNInicio extends javax.swing.JFrame {
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel3)
-                .addGap(33, 33, 33)
-                .addComponent(btminicio)
-                .addGap(70, 70, 70)
-                .addComponent(btmregistro)
+                .addGap(18, 18, 18)
+                .addComponent(btninicio, javax.swing.GroupLayout.PREFERRED_SIZE, 69, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(btnregistro, javax.swing.GroupLayout.PREFERRED_SIZE, 69, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -117,13 +111,9 @@ public class FRNInicio extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void btminicioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btminicioActionPerformed
- 
-    }//GEN-LAST:event_btminicioActionPerformed
-
-    private void btmregistroActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btmregistroActionPerformed
-   
-    }//GEN-LAST:event_btmregistroActionPerformed
+    private void btninicioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btninicioActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_btninicioActionPerformed
 
     /**
      * @param args the command line arguments
@@ -151,8 +141,8 @@ public class FRNInicio extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    public javax.swing.JButton btminicio;
-    public javax.swing.JButton btmregistro;
+    public javax.swing.JButton btninicio;
+    public javax.swing.JButton btnregistro;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;

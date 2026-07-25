@@ -16,7 +16,7 @@ import java.util.ArrayList;
 public class UserDB {
     
     public boolean Insert(User User){
-        String sql_query = "INSERT INTO Usuario(nombre, usuario, pass) VALUES (?,?,?)";
+        String sql_query = "INSERT INTO Usuario(nombre, usuario, pass, telefono) VALUES (?,?,?, ?)";
         
         try{
             Connection conn = ConectionDB.conexion();
@@ -25,7 +25,8 @@ public class UserDB {
             
             stmt.setString(1, User.getNombre());
             stmt.setString(2, User.getUsuario());
-            stmt.setString(3, User.getPass());            
+            stmt.setString(3, User.getPass()); 
+            stmt.setString(4, User.getTelefono());
            
             stmt.executeUpdate();
            
@@ -58,9 +59,10 @@ public class UserDB {
                 String nombre = result.getString("nombre");
                 String usuario = result.getString("usuario");
                 String pass = result.getString("pass");
+                String telefono = result.getString("telefono");
                
                 //Crear un objeto y guardarlo en la lista
-                User Usuario = new User(id, nombre, usuario, pass);
+                User Usuario = new User(id, nombre, usuario, pass, telefono);
                 
                 
                 //Guardar el objeto en la lista
@@ -75,35 +77,25 @@ public class UserDB {
     }
     
     
-    public String validarLogin(String usuario, String pass) {
-    String sql_query = "SELECT nombre FROM Usuario WHERE usuario = ? AND pass = ?";
-    
-    try {
-        Connection conn = ConectionDB.conexion();
-        PreparedStatement stmt = conn.prepareStatement(sql_query);
+    public User validarLogin(String usuario, String pass) {
+    String sql = "SELECT id_usuario, nombre, usuario FROM Usuario WHERE usuario = ? AND pass = ?";
+    try (Connection conn = ConectionDB.conexion();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
         
         stmt.setString(1, usuario);
         stmt.setString(2, pass);
-        
-        ResultSet result = stmt.executeQuery();
-        
-        if (result.next()) {
-            // Si encontró al usuario, extraemos su columna 'nombre'
-            String nombreUsuario = result.getString("nombre");
-            
-            stmt.close();
-            conn.close();
-            return nombreUsuario; // Retornamos el nombre real
+        ResultSet rs = stmt.executeQuery();
+
+        if (rs.next()) {
+            User u = new User();
+            u.setId(rs.getInt("id_usuario"));
+            u.setNombre(rs.getString("nombre"));
+            u.setUsuario(rs.getString("usuario"));
+            return u;
         }
-        
-        // Si no encontró coincidencias
-        stmt.close();
-        conn.close();
-        return null; 
-        
-    } catch(SQLException e) {
-        System.out.println("Error al validar login: " + e.getMessage());
-        return null;
+    } catch (SQLException e) {
+        System.err.println("Error en login: " + e.getMessage());
     }
-   }
+    return null; // Si no lo encuentra o falla
+}
 }

@@ -11,8 +11,7 @@ import java.sql.*;
  * @author demia
  */
 public class ConectionDB {
-     //Manejo de las constantes de datos de la conexion
-    
+        
     private static final String URL = "jdbc:mysql://localhost:3306/saldoplus";
     private static final String USER = "root";
     private static final String PASS = "";
@@ -25,10 +24,6 @@ public class ConectionDB {
             
             conn = DriverManager.getConnection(URL, USER, PASS);
             System.out.print("Conexion exitosa");
-            
-            System.out.println("Cambio en el repositorio local");
-            
-            System.out.println("Hola amor de mi vida");
             
         }catch(SQLException e){
             //Manjer error
