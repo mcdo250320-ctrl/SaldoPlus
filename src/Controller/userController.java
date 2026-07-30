@@ -301,7 +301,6 @@ public class userController {
         if (vistaTransaccion.cmbcategoria.getItemCount() > 0) vistaTransaccion.cmbcategoria.setSelectedIndex(0);
         if (vistaTransaccion.cmbmeta.getItemCount() > 0) vistaTransaccion.cmbmeta.setSelectedIndex(0);
     }
-    // Agrega este método dentro de userController.java
 
     private void actualizarResumenMensual() {
         int idUsuario = SesionUsuario.getUsuarioActual().getId();
@@ -329,6 +328,37 @@ public class userController {
             // Positivo: Verde sin signo "-"
             vistaTransaccion.lblBalanceTotal.setForeground(new java.awt.Color(0, 150, 0));
             vistaTransaccion.lblBalanceTotal.setText(String.format("$ %.2f", balance));
+        }
+    }
+    // Variable de categoría/tipo seleccionada en la vista (si usas botones para seleccionar)
+    private String tipoFiltroSeleccionado = "Todos";
+    private String categoriaFiltroSeleccionada = "Todas";
+
+    public void abrirPantallaHistorial() {
+        vistaHistorial = new FrmHistorial();
+
+        vistaHistorial.btnFiltrar.addActionListener(e -> cargarTablaHistorial());
+
+        cargarTablaHistorial();
+
+        vistaHistorial.setVisible(true);
+        vistaHistorial.setLocationRelativeTo(null);
+    }
+
+    private void cargarTablaHistorial() {
+        int idUsuario = SesionUsuario.getUsuarioActual().getId();
+
+        String frecuencia = vistaHistorial.cmbFrecuencia.getSelectedItem() != null ? 
+                            vistaHistorial.cmbFrecuencia.getSelectedItem().toString() : "Todos";
+
+        TransaccionDB tDB = new TransaccionDB();
+        List<Object[]> datos = tDB.obtenerTransaccionesFiltradas(idUsuario, frecuencia, tipoFiltroSeleccionado, categoriaFiltroSeleccionada);
+
+        javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) vistaHistorial.tablaHistorial.getModel();
+        model.setRowCount(0);
+
+        for (Object[] fila : datos) {
+            model.addRow(fila);
         }
     }
 }
