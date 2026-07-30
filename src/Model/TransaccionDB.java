@@ -117,4 +117,43 @@ public class TransaccionDB {
             return false;
         }
     }
+    
+    public float[] obtenerTotalesPorUsuario(int idUsuario) {
+        float totalIngresos = 0;
+        float totalEgresos = 0;
+
+        String sql = "SELECT tipo, SUM(monto) AS total FROM transaccion WHERE id_usuario = ? GROUP BY tipo";
+
+        try (Connection con = ConectionDB.conexion(); 
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, idUsuario);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String tipo = rs.getString("tipo");
+                    if (tipo != null) {
+                        tipo = tipo.trim(); // Eliminar espacios accidentales
+                    }
+
+                    float total = rs.getFloat("total");
+
+                    // Evaluamos variaciones comunes por si acaso
+                    if ("Ingreso".equalsIgnoreCase(tipo) || "Ingresos".equalsIgnoreCase(tipo)) {
+                        totalIngresos = total;
+                    } else if ("Egreso".equalsIgnoreCase(tipo) || "Egresos".equalsIgnoreCase(tipo) || "Gasto".equalsIgnoreCase(tipo)) {
+                        totalEgresos = total;
+                    }
+                }
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error al obtener totales: " + e.getMessage());
+        }
+
+        // Balance real: Ingresos - Egresos
+        float balance = totalIngresos - totalEgresos;
+
+        return new float[]{totalIngresos, totalEgresos, balance};
+    }
 }
