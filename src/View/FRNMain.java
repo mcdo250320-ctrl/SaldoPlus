@@ -40,6 +40,25 @@ public class FRNMain extends javax.swing.JFrame {
 
         jPanel1.setBackground(new java.awt.Color(4, 57, 36));
 
+        jButton1.setFont(new java.awt.Font("Nirmala UI", 1, 18)); // NOI18N
+        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagenes/icons8-transacción-32.png"))); // NOI18N
+        jButton1.setText("Transaccion");
+        jButton1.setAlignmentX(0.5F);
+        jButton1.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jButton1.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
+        jButton1.setIconTextGap(130);
+        jButton1.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
+        jButton1.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
+
+        jButton2.setFont(new java.awt.Font("Nirmala UI", 1, 18)); // NOI18N
+        jButton2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagenes/icons8-pasado-30.png"))); // NOI18N
+        jButton2.setText("Historial");
+        jButton2.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jButton2.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
+        jButton2.setIconTextGap(155);
+        jButton2.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
+        jButton2.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
+
         jPanel2.setBackground(new java.awt.Color(255, 255, 255));
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);

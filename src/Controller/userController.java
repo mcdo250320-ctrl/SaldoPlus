@@ -277,7 +277,6 @@ public class userController {
 
                 TransaccionDB tDB = new TransaccionDB();
                 
-                // ✔️ Una sola inserción limpia
                 if (tDB.insertarTransaccion(t)) {
                     JOptionPane.showMessageDialog(vistaTransaccion, "Transacción guardada exitosamente.");
                     limpiarFormularioTransaccion();
@@ -306,20 +305,15 @@ public class userController {
         int idUsuario = SesionUsuario.getUsuarioActual().getId();
         TransaccionDB tDB = new TransaccionDB();
 
-        // totales[0] = Ingresos (31050.00)
-        // totales[1] = Egresos (23850.50)
-        // totales[2] = Balance (7199.50)
         float[] totales = tDB.obtenerTotalesPorUsuario(idUsuario);
 
         float ingresos = totales[0];
         float egresos = totales[1];
         float balance = totales[2];
 
-        // 1. Asignar los totales a sus etiquetas correspondientes
         vistaTransaccion.lblIngresosTotal.setText(String.format("$ %.2f", ingresos));
         vistaTransaccion.lblEgresosTotal.setText(String.format("$ %.2f", egresos));
 
-        // 2. Aplicar formato y color al Balance
         if (balance < 0) {
             // Negativo: Rojo con signo "-"
             vistaTransaccion.lblBalanceTotal.setForeground(new java.awt.Color(200, 0, 0));
@@ -330,35 +324,58 @@ public class userController {
             vistaTransaccion.lblBalanceTotal.setText(String.format("$ %.2f", balance));
         }
     }
-    // Variable de categoría/tipo seleccionada en la vista (si usas botones para seleccionar)
-    private String tipoFiltroSeleccionado = "Todos";
-    private String categoriaFiltroSeleccionada = "Todas";
+    
+private String filtroTipo = "Todos"; 
+private String filtroCategoria = "Todas";
 
-    public void abrirPantallaHistorial() {
-        vistaHistorial = new FrmHistorial();
+public void abrirPantallaHistorial() {
+    vistaHistorial = new FrmHistorial();
 
-        vistaHistorial.btnFiltrar.addActionListener(e -> cargarTablaHistorial());
+    java.util.Date hoy = new java.util.Date();
+    if (vistaHistorial.dateInicio != null) vistaHistorial.dateInicio.setDate(hoy);
+    if (vistaHistorial.dateFin != null) vistaHistorial.dateFin.setDate(hoy);
 
+    vistaHistorial.btnTipoIngreso.addActionListener(e -> {
+        filtroTipo = "Ingreso";
         cargarTablaHistorial();
+    });
+    
+    vistaHistorial.btnTipoEgreso.addActionListener(e -> {
+        filtroTipo = "Egreso";
+        cargarTablaHistorial();
+    });
 
-        vistaHistorial.setVisible(true);
-        vistaHistorial.setLocationRelativeTo(null);
+    vistaHistorial.btnRopa.addActionListener(e -> { filtroCategoria = "Ropa"; cargarTablaHistorial(); });
+    vistaHistorial.btnServicios.addActionListener(e -> { filtroCategoria = "Servicios"; cargarTablaHistorial(); });
+    vistaHistorial.btnTrans.addActionListener(e -> { filtroCategoria = "Transporte"; cargarTablaHistorial(); });
+    vistaHistorial.btnOtros.addActionListener(e -> { filtroCategoria = "Otros"; cargarTablaHistorial(); });
+    vistaHistorial.btnComida.addActionListener(e -> { filtroCategoria = "Comida"; cargarTablaHistorial(); });
+    vistaHistorial.btnEntre.addActionListener(e -> { filtroCategoria = "Entretenimiento"; cargarTablaHistorial(); });
+
+    // 4. Botón de reset/filtrar principal
+    vistaHistorial.btnFiltrar.addActionListener(e -> cargarTablaHistorial());
+
+    // Carga inicial
+    cargarTablaHistorial();
+
+    vistaHistorial.setVisible(true);
+    vistaHistorial.setLocationRelativeTo(null);
+}
+
+private void cargarTablaHistorial() {
+    int idUsuario = SesionUsuario.getUsuarioActual().getId();
+
+    java.util.Date fInicio = vistaHistorial.dateInicio.getDate();
+    java.util.Date fFin = vistaHistorial.dateFin.getDate();
+
+    TransaccionDB tDB = new TransaccionDB();
+    List<Object[]> datos = tDB.obtenerTransaccionesAvanzado(idUsuario, fInicio, fFin, filtroTipo, filtroCategoria);
+
+    javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) vistaHistorial.tablaHistorial.getModel();
+    model.setRowCount(0);
+
+    for (Object[] fila : datos) {
+        model.addRow(fila);
     }
-
-    private void cargarTablaHistorial() {
-        int idUsuario = SesionUsuario.getUsuarioActual().getId();
-
-        String frecuencia = vistaHistorial.cmbFrecuencia.getSelectedItem() != null ? 
-                            vistaHistorial.cmbFrecuencia.getSelectedItem().toString() : "Todos";
-
-        TransaccionDB tDB = new TransaccionDB();
-        List<Object[]> datos = tDB.obtenerTransaccionesFiltradas(idUsuario, frecuencia, tipoFiltroSeleccionado, categoriaFiltroSeleccionada);
-
-        javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) vistaHistorial.tablaHistorial.getModel();
-        model.setRowCount(0);
-
-        for (Object[] fila : datos) {
-            model.addRow(fila);
-        }
-    }
+}
 }

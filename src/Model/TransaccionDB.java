@@ -157,10 +157,9 @@ public class TransaccionDB {
         return new float[]{totalIngresos, totalEgresos, balance};
     }
     
-    public List<Object[]> obtenerTransaccionesFiltradas(int idUsuario, String frecuencia, String tipo, String categoria) {
+    public List<Object[]> obtenerTransaccionesAvanzado(int idUsuario, java.util.Date fechaInicio, java.util.Date fechaFin, String tipo, String categoria) {
         List<Object[]> lista = new ArrayList<>();
 
-        // Consulta base
         StringBuilder sql = new StringBuilder(
             "SELECT t.fecha, t.tipo, COALESCE(c.nombre, 'Sin Categoria') AS categoria, t.monto " +
             "FROM transaccion t " +
@@ -168,25 +167,15 @@ public class TransaccionDB {
             "WHERE t.id_usuario = ? "
         );
 
-        // 1. Filtro por Frecuencia de fecha
-        if (frecuencia != null && !frecuencia.isEmpty() && !"Todos".equalsIgnoreCase(frecuencia)) {
-            switch (frecuencia.toLowerCase()) {
-                case "diario":
-                    sql.append("AND t.fecha = CURRENT_DATE ");
-                    break;
-                case "semanal":
-                    sql.append("AND t.fecha >= CURRENT_DATE - INTERVAL '7 days' ");
-                    break;
-                case "mensual":
-                    sql.append("AND t.fecha >= CURRENT_DATE - INTERVAL '1 month' ");
-                    break;
-                case "anual":
-                    sql.append("AND t.fecha >= CURRENT_DATE - INTERVAL '1 year' ");
-                    break;
-            }
+        // 1. Filtro por Rango de Fechas
+        if (fechaInicio != null) {
+            sql.append("AND t.fecha >= ? ");
+        }
+        if (fechaFin != null) {
+            sql.append("AND t.fecha <= ? ");
         }
 
-        // 2. Filtro por Tipo (Ingreso / Egreso)
+        // 2. Filtro por Tipo
         if (tipo != null && !tipo.isEmpty() && !"Todos".equalsIgnoreCase(tipo)) {
             sql.append("AND LOWER(t.tipo) = LOWER(?) ");
         }
@@ -201,15 +190,20 @@ public class TransaccionDB {
         try (Connection con = ConectionDB.conexion();
              PreparedStatement ps = con.prepareStatement(sql.toString())) {
 
-            int paramIndex = 1;
-            ps.setInt(paramIndex++, idUsuario);
+            int index = 1;
+            ps.setInt(index++, idUsuario);
 
-            if (tipo != null && !tipo.isEmpty() && !"Todos".equalsIgnoreCase(tipo)) {
-                ps.setString(paramIndex++, tipo);
+            if (fechaInicio != null) {
+                ps.setDate(index++, new java.sql.Date(fechaInicio.getTime()));
             }
-
+            if (fechaFin != null) {
+                ps.setDate(index++, new java.sql.Date(fechaFin.getTime()));
+            }
+            if (tipo != null && !tipo.isEmpty() && !"Todos".equalsIgnoreCase(tipo)) {
+                ps.setString(index++, tipo);
+            }
             if (categoria != null && !categoria.isEmpty() && !"Todas".equalsIgnoreCase(categoria) && !"Todos".equalsIgnoreCase(categoria)) {
-                ps.setString(paramIndex++, categoria);
+                ps.setString(index++, categoria);
             }
 
             try (ResultSet rs = ps.executeQuery()) {
@@ -219,13 +213,12 @@ public class TransaccionDB {
                     fila[1] = rs.getString("tipo");
                     fila[2] = rs.getString("categoria");
                     fila[3] = String.format("$ %.2f", rs.getFloat("monto"));
-
                     lista.add(fila);
                 }
             }
 
         } catch (SQLException e) {
-            System.err.println("Error al filtrar transacciones: " + e.getMessage());
+            System.err.println("Error en consulta de historial: " + e.getMessage());
         }
 
         return lista;
