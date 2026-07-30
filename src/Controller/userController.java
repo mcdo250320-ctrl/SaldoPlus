@@ -10,6 +10,7 @@ import Model.TransaccionDB;
 import Model.User;
 import Model.UserDB;
 import View.FRNInicio;
+import View.FRNMain;
 import View.FRNRegistro;
 import View.FRNTransaccion;
 import View.FrmHistorial;
@@ -26,6 +27,10 @@ public class userController {
     private FRNRegistro vistaRegistro;
     private FrmHistorial vistaHistorial;
     private FRNTransaccion vistaTransaccion;
+    private FRNMain vistaMain;
+
+    private String filtroTipo = "Todos"; 
+    private String filtroCategoria = "Todas";
 
     public userController(FRNInicio vistaInicio) {
         this.vistaInicio = vistaInicio;
@@ -117,8 +122,8 @@ public class userController {
                                 "Inicio de Sesión Exitoso",
                                 JOptionPane.INFORMATION_MESSAGE);
 
-                        abrirPantallaTransaccion();
                         vistaLogin.dispose();
+                        abrirPantallaMain();
 
                     } else {
                         JOptionPane.showMessageDialog(vistaLogin,
@@ -126,7 +131,7 @@ public class userController {
                                 "Error de Autenticación",
                                 JOptionPane.ERROR_MESSAGE);
                     }
-                }
+               }
             });
 
             vistaLogin.setVisible(true);
@@ -135,7 +140,28 @@ public class userController {
         }
     }
 
-        public void abrirPantallaTransaccion() {
+    public void abrirPantallaMain() {
+        vistaMain = new FRNMain();
+
+        if (SesionUsuario.getUsuarioActual() != null) {
+            vistaMain.lblBienvenido.setText("Bienvenido " + SesionUsuario.getUsuarioActual().getNombre());
+        }
+
+        vistaMain.btnTransaccion.addActionListener(e -> {
+            vistaMain.dispose();
+            abrirPantallaTransaccion();
+        });
+
+        vistaMain.btnHistorial.addActionListener(e -> {
+            vistaMain.dispose();
+            abrirPantallaHistorial();
+        });
+
+        vistaMain.setVisible(true);
+        vistaMain.setLocationRelativeTo(null);
+    }
+
+    public void abrirPantallaTransaccion() {
         vistaTransaccion = new FRNTransaccion();
 
         cargarCategoriasTransaccion();
@@ -143,27 +169,21 @@ public class userController {
 
         vistaTransaccion.btnguardar.addActionListener(new GuardarTransaccionAction());
 
-        // 2. Escuchar cambios en los componentes para actualizar la Vista Previa en tiempo real
-
-        // Texto de Monto (al escribir)
         vistaTransaccion.txtmonto.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             public void insertUpdate(javax.swing.event.DocumentEvent e) { actualizarVistaPrevia(); }
             public void removeUpdate(javax.swing.event.DocumentEvent e) { actualizarVistaPrevia(); }
             public void changedUpdate(javax.swing.event.DocumentEvent e) { actualizarVistaPrevia(); }
         });
 
-        // Texto de Descripción (al escribir)
         vistaTransaccion.txtdesc.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             public void insertUpdate(javax.swing.event.DocumentEvent e) { actualizarVistaPrevia(); }
             public void removeUpdate(javax.swing.event.DocumentEvent e) { actualizarVistaPrevia(); }
             public void changedUpdate(javax.swing.event.DocumentEvent e) { actualizarVistaPrevia(); }
         });
 
-        // Combos de Tipo y Categoría (al seleccionar)
         vistaTransaccion.cmbtipo.addActionListener(e -> actualizarVistaPrevia());
         vistaTransaccion.cmbcategoria.addActionListener(e -> actualizarVistaPrevia());
 
-        // Cargar la fecha actual de hoy en la vista previa
         java.time.LocalDate hoy = java.time.LocalDate.now();
         java.time.format.DateTimeFormatter formato = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
         vistaTransaccion.lblFechaPreview.setText(hoy.format(formato));
@@ -173,9 +193,7 @@ public class userController {
         actualizarResumenMensual();
     }
 
-    // Método que actualiza las etiquetas de la Vista Previa
     private void actualizarVistaPrevia() {
-        // 1. Actualizar Monto
         String montoStr = vistaTransaccion.txtmonto.getText().trim();
         if (montoStr.isEmpty()) {
             vistaTransaccion.lblMontoPreview.setText("$ 0.00");
@@ -188,7 +206,6 @@ public class userController {
             }
         }
 
-        // 2. Actualizar Descripción
         String descStr = vistaTransaccion.txtdesc.getText().trim();
         if (descStr.isEmpty()) {
             vistaTransaccion.lblDescPreview.setText("Descripción del ingreso aparecerá aquí...");
@@ -196,14 +213,12 @@ public class userController {
             vistaTransaccion.lblDescPreview.setText(descStr);
         }
 
-        // 3. Actualizar Tipo
         if (vistaTransaccion.cmbtipo.getSelectedItem() != null) {
             vistaTransaccion.lblTipoPreview.setText(vistaTransaccion.cmbtipo.getSelectedItem().toString());
         } else {
             vistaTransaccion.lblTipoPreview.setText("---");
         }
 
-        // 4. Actualizar Categoría
         if (vistaTransaccion.cmbcategoria.getSelectedItem() != null) {
             vistaTransaccion.lblCategoriaPreview.setText(vistaTransaccion.cmbcategoria.getSelectedItem().toString());
         } else {
@@ -211,15 +226,15 @@ public class userController {
         }
     }
 
-        private void cargarCategoriasTransaccion() {
-            CategoriaDB catDB = new CategoriaDB();
-            List<Categoria> categorias = catDB.obtenerCategorias();
+    private void cargarCategoriasTransaccion() {
+        CategoriaDB catDB = new CategoriaDB();
+        List<Categoria> categorias = catDB.obtenerCategorias();
 
-            vistaTransaccion.cmbcategoria.removeAllItems();
-            for (Categoria cat : categorias) {
-                ((javax.swing.DefaultComboBoxModel) vistaTransaccion.cmbcategoria.getModel()).addElement(cat);
-            }
+        vistaTransaccion.cmbcategoria.removeAllItems();
+        for (Categoria cat : categorias) {
+            ((javax.swing.DefaultComboBoxModel) vistaTransaccion.cmbcategoria.getModel()).addElement(cat);
         }
+    }
 
     private void cargarMetasTransaccion() {
         MetaDB metaDB = new MetaDB();
@@ -280,7 +295,7 @@ public class userController {
                 if (tDB.insertarTransaccion(t)) {
                     JOptionPane.showMessageDialog(vistaTransaccion, "Transacción guardada exitosamente.");
                     limpiarFormularioTransaccion();
-                    actualizarResumenMensual(); // Actualiza los totales en pantalla
+                    actualizarResumenMensual();
                 } else {
                     JOptionPane.showMessageDialog(vistaTransaccion, "Error al insertar en la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
                 }
@@ -315,67 +330,89 @@ public class userController {
         vistaTransaccion.lblEgresosTotal.setText(String.format("$ %.2f", egresos));
 
         if (balance < 0) {
-            // Negativo: Rojo con signo "-"
             vistaTransaccion.lblBalanceTotal.setForeground(new java.awt.Color(200, 0, 0));
             vistaTransaccion.lblBalanceTotal.setText(String.format("-$ %.2f", Math.abs(balance)));
         } else {
-            // Positivo: Verde sin signo "-"
             vistaTransaccion.lblBalanceTotal.setForeground(new java.awt.Color(0, 150, 0));
             vistaTransaccion.lblBalanceTotal.setText(String.format("$ %.2f", balance));
         }
     }
-    
-private String filtroTipo = "Todos"; 
-private String filtroCategoria = "Todas";
 
-public void abrirPantallaHistorial() {
-    vistaHistorial = new FrmHistorial();
+    public void abrirPantallaHistorial() {
+        vistaHistorial = new FrmHistorial();
 
-    java.util.Date hoy = new java.util.Date();
-    if (vistaHistorial.dateInicio != null) vistaHistorial.dateInicio.setDate(hoy);
-    if (vistaHistorial.dateFin != null) vistaHistorial.dateFin.setDate(hoy);
+        filtroTipo = "Todos";
+        filtroCategoria = "Todas";
 
-    vistaHistorial.btnTipoIngreso.addActionListener(e -> {
-        filtroTipo = "Ingreso";
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        java.util.Date hoy = cal.getTime();
+        cal.set(java.util.Calendar.DAY_OF_MONTH, 1);
+        java.util.Date inicioMes = cal.getTime();
+
+        if (vistaHistorial.dateInicio != null) vistaHistorial.dateInicio.setDate(inicioMes);
+        if (vistaHistorial.dateFin != null) vistaHistorial.dateFin.setDate(hoy);
+
+        vistaHistorial.btnTipoIngreso.addActionListener(e -> aplicarFiltroTipo("Ingreso"));
+        vistaHistorial.btnTipoEgreso.addActionListener(e -> aplicarFiltroTipo("Egreso"));
+
+        vistaHistorial.btnRopa.addActionListener(e -> aplicarFiltroCategoria("Ropa"));
+        vistaHistorial.btnServicios.addActionListener(e -> aplicarFiltroCategoria("Servicios"));
+        vistaHistorial.btnTrans.addActionListener(e -> aplicarFiltroCategoria("Transporte"));
+        vistaHistorial.btnOtros.addActionListener(e -> aplicarFiltroCategoria("Otros"));
+        vistaHistorial.btnComida.addActionListener(e -> aplicarFiltroCategoria("Comida"));
+        vistaHistorial.btnEntre.addActionListener(e -> aplicarFiltroCategoria("Entretenimiento"));
+
+        vistaHistorial.btnFiltrar.addActionListener(e -> cargarTablaHistorial());
+
         cargarTablaHistorial();
-    });
-    
-    vistaHistorial.btnTipoEgreso.addActionListener(e -> {
-        filtroTipo = "Egreso";
-        cargarTablaHistorial();
-    });
 
-    vistaHistorial.btnRopa.addActionListener(e -> { filtroCategoria = "Ropa"; cargarTablaHistorial(); });
-    vistaHistorial.btnServicios.addActionListener(e -> { filtroCategoria = "Servicios"; cargarTablaHistorial(); });
-    vistaHistorial.btnTrans.addActionListener(e -> { filtroCategoria = "Transporte"; cargarTablaHistorial(); });
-    vistaHistorial.btnOtros.addActionListener(e -> { filtroCategoria = "Otros"; cargarTablaHistorial(); });
-    vistaHistorial.btnComida.addActionListener(e -> { filtroCategoria = "Comida"; cargarTablaHistorial(); });
-    vistaHistorial.btnEntre.addActionListener(e -> { filtroCategoria = "Entretenimiento"; cargarTablaHistorial(); });
-
-    // 4. Botón de reset/filtrar principal
-    vistaHistorial.btnFiltrar.addActionListener(e -> cargarTablaHistorial());
-
-    // Carga inicial
-    cargarTablaHistorial();
-
-    vistaHistorial.setVisible(true);
-    vistaHistorial.setLocationRelativeTo(null);
-}
-
-private void cargarTablaHistorial() {
-    int idUsuario = SesionUsuario.getUsuarioActual().getId();
-
-    java.util.Date fInicio = vistaHistorial.dateInicio.getDate();
-    java.util.Date fFin = vistaHistorial.dateFin.getDate();
-
-    TransaccionDB tDB = new TransaccionDB();
-    List<Object[]> datos = tDB.obtenerTransaccionesAvanzado(idUsuario, fInicio, fFin, filtroTipo, filtroCategoria);
-
-    javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) vistaHistorial.tablaHistorial.getModel();
-    model.setRowCount(0);
-
-    for (Object[] fila : datos) {
-        model.addRow(fila);
+        vistaHistorial.setVisible(true);
+        vistaHistorial.setLocationRelativeTo(null);
     }
-}
+
+    private void aplicarFiltroTipo(String tipo) {
+        if (this.filtroTipo.equalsIgnoreCase(tipo)) {
+            this.filtroTipo = "Todos";
+        } else {
+            this.filtroTipo = tipo;
+        }
+    }
+
+    private void aplicarFiltroCategoria(String categoria) {
+        if (this.filtroCategoria.equalsIgnoreCase(categoria)) {
+            this.filtroCategoria = "Todas";
+        } else {
+            this.filtroCategoria = categoria;
+        }
+    }
+
+    private void cargarTablaHistorial() {
+        if (SesionUsuario.getUsuarioActual() == null) return;
+
+        int idUsuario = SesionUsuario.getUsuarioActual().getId();
+
+        java.util.Date fInicio = (vistaHistorial.dateInicio != null) ? vistaHistorial.dateInicio.getDate() : null;
+        java.util.Date fFin = (vistaHistorial.dateFin != null) ? vistaHistorial.dateFin.getDate() : null;
+
+        if (fFin != null) {
+            java.util.Calendar calFin = java.util.Calendar.getInstance();
+            calFin.setTime(fFin);
+            calFin.set(java.util.Calendar.HOUR_OF_DAY, 23);
+            calFin.set(java.util.Calendar.MINUTE, 59);
+            calFin.set(java.util.Calendar.SECOND, 59);
+            fFin = calFin.getTime();
+        }
+
+        TransaccionDB tDB = new TransaccionDB();
+        List<Object[]> datos = tDB.obtenerTransaccionesAvanzado(idUsuario, fInicio, fFin, filtroTipo, filtroCategoria);
+
+        javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) vistaHistorial.tablaHistorial.getModel();
+        model.setRowCount(0);
+
+        if (datos != null) {
+            for (Object[] fila : datos) {
+                model.addRow(fila);
+            }
+        }
+    }
 }
