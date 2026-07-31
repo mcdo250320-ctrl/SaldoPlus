@@ -157,70 +157,78 @@ public class TransaccionDB {
         return new float[]{totalIngresos, totalEgresos, balance};
     }
     
-    public List<Object[]> obtenerTransaccionesAvanzado(int idUsuario, java.util.Date fechaInicio, java.util.Date fechaFin, String tipo, String categoria) {
-        List<Object[]> lista = new ArrayList<>();
+    public List<Object[]> obtenerTransaccionesAvanzado(int idUsuario, java.util.Date fInicio, java.util.Date fFin, String filtroTipo, String filtroCategoria) {
+    List<Object[]> lista = new ArrayList<>();
+    
+    // Consulta base
+    StringBuilder sql = new StringBuilder();
+    sql.append("SELECT t.fecha, t.tipo, c.nombre, t.monto ");
+    sql.append("FROM transaccion t ");
+    sql.append("JOIN categoria c ON t.id_categoria = c.id_categoria ");
+    sql.append("WHERE t.id_usuario = ? ");
 
-        StringBuilder sql = new StringBuilder(
-            "SELECT t.fecha, t.tipo, COALESCE(c.nombre, 'Sin Categoria') AS categoria, t.monto " +
-            "FROM transaccion t " +
-            "LEFT JOIN categoria c ON t.id_categoria = c.id_categoria " +
-            "WHERE t.id_usuario = ? "
-        );
-
-        // 1. Filtro por Rango de Fechas
-        if (fechaInicio != null) {
-            sql.append("AND t.fecha >= ? ");
-        }
-        if (fechaFin != null) {
-            sql.append("AND t.fecha <= ? ");
-        }
-
-        // 2. Filtro por Tipo
-        if (tipo != null && !tipo.isEmpty() && !"Todos".equalsIgnoreCase(tipo)) {
-            sql.append("AND LOWER(t.tipo) = LOWER(?) ");
-        }
-
-        // 3. Filtro por Categoría
-        if (categoria != null && !categoria.isEmpty() && !"Todas".equalsIgnoreCase(categoria) && !"Todos".equalsIgnoreCase(categoria)) {
-            sql.append("AND LOWER(c.nombre) = LOWER(?) ");
-        }
-
-        sql.append("ORDER BY t.fecha DESC");
-
-        try (Connection con = ConectionDB.conexion();
-             PreparedStatement ps = con.prepareStatement(sql.toString())) {
-
-            int index = 1;
-            ps.setInt(index++, idUsuario);
-
-            if (fechaInicio != null) {
-                ps.setDate(index++, new java.sql.Date(fechaInicio.getTime()));
-            }
-            if (fechaFin != null) {
-                ps.setDate(index++, new java.sql.Date(fechaFin.getTime()));
-            }
-            if (tipo != null && !tipo.isEmpty() && !"Todos".equalsIgnoreCase(tipo)) {
-                ps.setString(index++, tipo);
-            }
-            if (categoria != null && !categoria.isEmpty() && !"Todas".equalsIgnoreCase(categoria) && !"Todos".equalsIgnoreCase(categoria)) {
-                ps.setString(index++, categoria);
-            }
-
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    Object[] fila = new Object[4];
-                    fila[0] = rs.getDate("fecha");
-                    fila[1] = rs.getString("tipo");
-                    fila[2] = rs.getString("categoria");
-                    fila[3] = String.format("$ %.2f", rs.getFloat("monto"));
-                    lista.add(fila);
-                }
-            }
-
-        } catch (SQLException e) {
-            System.err.println("Error en consulta de historial: " + e.getMessage());
-        }
-
-        return lista;
+    // 1. Filtro por Rango de Fechas
+    if (fInicio != null && fFin != null) {
+        sql.append("AND t.fecha BETWEEN ? AND ? ");
     }
+
+    // 2. Filtro por Tipo (Ingreso / Egreso)
+    if (!filtroTipo.equalsIgnoreCase("Todos")) {
+        sql.append("AND t.tipo = ? ");
+    }
+
+    // 3. Filtro Múltiple por Categorías usando IN (...)
+    String[] categoriasArray = null;
+    if (!filtroCategoria.equalsIgnoreCase("Todas") && !filtroCategoria.trim().isEmpty()) {
+        categoriasArray = filtroCategoria.split(",");
+        sql.append("AND c.nombre IN (");
+        for (int i = 0; i < categoriasArray.length; i++) {
+            sql.append("?");
+            if (i < categoriasArray.length - 1) {
+                sql.append(",");
+            }
+        }
+        sql.append(") ");
+    }
+
+    sql.append("ORDER BY t.fecha DESC");
+
+    try (Connection con = ConectionDB.conexion();
+         PreparedStatement ps = con.prepareStatement(sql.toString())) {
+
+        int paramIndex = 1;
+        ps.setInt(paramIndex++, idUsuario);
+
+        if (fInicio != null && fFin != null) {
+            ps.setTimestamp(paramIndex++, new java.sql.Timestamp(fInicio.getTime()));
+            ps.setTimestamp(paramIndex++, new java.sql.Timestamp(fFin.getTime()));
+        }
+
+        if (!filtroTipo.equalsIgnoreCase("Todos")) {
+            ps.setString(paramIndex++, filtroTipo);
+        }
+
+        if (categoriasArray != null) {
+            for (String cat : categoriasArray) {
+                ps.setString(paramIndex++, cat.trim());
+            }
+        }
+
+        try (ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Object[] fila = new Object[4];
+                fila[0] = rs.getDate("fecha");
+                fila[1] = rs.getString("tipo");
+                fila[2] = rs.getString("nombre");
+                fila[3] = String.format("$ %.2f", rs.getDouble("monto"));
+                lista.add(fila);
+            }
+        }
+
+    } catch (SQLException e) {
+        System.out.println("Error al consultar transacciones: " + e.getMessage());
+    }
+
+    return lista;
+}
 }

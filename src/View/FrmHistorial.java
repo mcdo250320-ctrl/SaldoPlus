@@ -52,7 +52,6 @@ public class FrmHistorial extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setBackground(new java.awt.Color(255, 255, 255));
-        setPreferredSize(new java.awt.Dimension(835, 485));
 
         jPanel2.setBackground(new java.awt.Color(255, 255, 255));
 
@@ -251,13 +250,13 @@ public class FrmHistorial extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_btnEntreActionPerformed
 
-    private void btnServiciosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnServiciosActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_btnServiciosActionPerformed
-
     private void btnOtrosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOtrosActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_btnOtrosActionPerformed
+
+    private void btnServiciosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnServiciosActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_btnServiciosActionPerformed
 
     /**
      * @param args the command line arguments

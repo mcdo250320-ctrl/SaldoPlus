@@ -18,6 +18,7 @@ import View.frmlogin;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JOptionPane;
 
@@ -28,9 +29,6 @@ public class userController {
     private FrmHistorial vistaHistorial;
     private FRNTransaccion vistaTransaccion;
     private FRNMain vistaMain;
-
-    private String filtroTipo = "Todos"; 
-    private String filtroCategoria = "Todas";
 
     public userController(FRNInicio vistaInicio) {
         this.vistaInicio = vistaInicio;
@@ -341,9 +339,6 @@ public class userController {
     public void abrirPantallaHistorial() {
         vistaHistorial = new FrmHistorial();
 
-        filtroTipo = "Todos";
-        filtroCategoria = "Todas";
-
         java.util.Calendar cal = java.util.Calendar.getInstance();
         java.util.Date hoy = cal.getTime();
         cal.set(java.util.Calendar.DAY_OF_MONTH, 1);
@@ -352,38 +347,13 @@ public class userController {
         if (vistaHistorial.dateInicio != null) vistaHistorial.dateInicio.setDate(inicioMes);
         if (vistaHistorial.dateFin != null) vistaHistorial.dateFin.setDate(hoy);
 
-        vistaHistorial.btnTipoIngreso.addActionListener(e -> aplicarFiltroTipo("Ingreso"));
-        vistaHistorial.btnTipoEgreso.addActionListener(e -> aplicarFiltroTipo("Egreso"));
-
-        vistaHistorial.btnRopa.addActionListener(e -> aplicarFiltroCategoria("Ropa"));
-        vistaHistorial.btnServicios.addActionListener(e -> aplicarFiltroCategoria("Servicios"));
-        vistaHistorial.btnTrans.addActionListener(e -> aplicarFiltroCategoria("Transporte"));
-        vistaHistorial.btnOtros.addActionListener(e -> aplicarFiltroCategoria("Otros"));
-        vistaHistorial.btnComida.addActionListener(e -> aplicarFiltroCategoria("Comida"));
-        vistaHistorial.btnEntre.addActionListener(e -> aplicarFiltroCategoria("Entretenimiento"));
-
+        // El botón Filtrar evalúa directo la propiedad isSelected() de los JToggleButton
         vistaHistorial.btnFiltrar.addActionListener(e -> cargarTablaHistorial());
 
         cargarTablaHistorial();
 
         vistaHistorial.setVisible(true);
         vistaHistorial.setLocationRelativeTo(null);
-    }
-
-    private void aplicarFiltroTipo(String tipo) {
-        if (this.filtroTipo.equalsIgnoreCase(tipo)) {
-            this.filtroTipo = "Todos";
-        } else {
-            this.filtroTipo = tipo;
-        }
-    }
-
-    private void aplicarFiltroCategoria(String categoria) {
-        if (this.filtroCategoria.equalsIgnoreCase(categoria)) {
-            this.filtroCategoria = "Todas";
-        } else {
-            this.filtroCategoria = categoria;
-        }
     }
 
     private void cargarTablaHistorial() {
@@ -401,6 +371,31 @@ public class userController {
             calFin.set(java.util.Calendar.MINUTE, 59);
             calFin.set(java.util.Calendar.SECOND, 59);
             fFin = calFin.getTime();
+        }
+
+        // EVALUACIÓN DE BOTONES DE TIPO
+        boolean ing = vistaHistorial.btnTipoIngreso.isSelected();
+        boolean egr = vistaHistorial.btnTipoEgreso.isSelected();
+        
+        String filtroTipo = "Todos";
+        if (ing && !egr) {
+            filtroTipo = "Ingreso";
+        } else if (egr && !ing) {
+            filtroTipo = "Egreso";
+        } // Si ambos o ninguno están presionados, se mantiene como "Todos"
+
+        // EVALUACIÓN DE BOTONES DE CATEGORÍA
+        List<String> seleccionadas = new ArrayList<>();
+        if (vistaHistorial.btnRopa.isSelected()) seleccionadas.add("Ropa");
+        if (vistaHistorial.btnServicios.isSelected()) seleccionadas.add("Servicios");
+        if (vistaHistorial.btnTrans.isSelected()) seleccionadas.add("Transporte");
+        if (vistaHistorial.btnOtros.isSelected()) seleccionadas.add("Otros");
+        if (vistaHistorial.btnComida.isSelected()) seleccionadas.add("Comida");
+        if (vistaHistorial.btnEntre.isSelected()) seleccionadas.add("Entretenimiento");
+
+        String filtroCategoria = "Todas";
+        if (!seleccionadas.isEmpty()) {
+            filtroCategoria = String.join(",", seleccionadas);
         }
 
         TransaccionDB tDB = new TransaccionDB();
