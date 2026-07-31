@@ -18,8 +18,7 @@ public class User {
     
     public User(){}
     
-    public User(String nombre, String usuario, String pass,String telefono){
-        
+    public User(String nombre, String usuario, String pass, String telefono){
         this.nombre = nombre;
         this.usuario = usuario;
         this.pass = pass;
@@ -27,12 +26,11 @@ public class User {
     }
     
     public User(int id, String nombre, String usuario, String pass, String telefono){
-        
+        this.id = id; // <-- Asignación corregida aquí
         this.nombre = nombre;
         this.usuario = usuario;
         this.pass = pass;
         this.telefono = telefono;
-        
     } 
 
     public int getId() {
@@ -74,6 +72,4 @@ public class User {
     public void setTelefono(String telefono) {
         this.telefono = telefono;
     }
-    
-    
 }

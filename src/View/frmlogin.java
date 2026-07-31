@@ -46,6 +46,7 @@ public class frmlogin extends javax.swing.JFrame {
         jSeparator2 = new javax.swing.JSeparator();
         bntiniciar = new javax.swing.JButton();
         txtpass = new javax.swing.JPasswordField();
+        btnAdmin = new javax.swing.JButton();
         jLabel8 = new javax.swing.JLabel();
 
         jLabel7.setText("jLabel7");
@@ -88,6 +89,16 @@ public class frmlogin extends javax.swing.JFrame {
 
         txtpass.setBorder(null);
 
+        btnAdmin.setBackground(new java.awt.Color(4, 57, 36));
+        btnAdmin.setFont(new java.awt.Font("Nirmala UI", 3, 18)); // NOI18N
+        btnAdmin.setForeground(new java.awt.Color(255, 255, 255));
+        btnAdmin.setText("Admin");
+        btnAdmin.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnAdminActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -109,19 +120,22 @@ public class frmlogin extends javax.swing.JFrame {
                 .addContainerGap(109, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                        .addComponent(jLabel1)
-                        .addGap(190, 190, 190))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                        .addComponent(bntiniciar)
-                        .addGap(187, 187, 187))))
+                .addComponent(bntiniciar)
+                .addGap(187, 187, 187))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(btnAdmin, javax.swing.GroupLayout.PREFERRED_SIZE, 103, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jLabel1)
+                .addGap(190, 190, 190))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel1)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel1)
+                    .addComponent(btnAdmin))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel2)
                 .addGap(18, 18, 18)
@@ -186,6 +200,10 @@ public class frmlogin extends javax.swing.JFrame {
        
     }//GEN-LAST:event_bntiniciarActionPerformed
 
+    private void btnAdminActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAdminActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_btnAdminActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -223,6 +241,7 @@ public class frmlogin extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     public javax.swing.JButton bntiniciar;
+    public javax.swing.JButton btnAdmin;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;

@@ -9,10 +9,12 @@ import Model.Transaccion;
 import Model.TransaccionDB;
 import Model.User;
 import Model.UserDB;
+import View.FRNAdmin;
 import View.FRNInicio;
 import View.FRNMain;
 import View.FRNRegistro;
 import View.FRNTransaccion;
+import View.FRNUsuarios;
 import View.FrmHistorial;
 import View.frmlogin;
 
@@ -21,6 +23,9 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JOptionPane;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.DefaultTableModel;
 
 public class userController {
 
@@ -29,6 +34,10 @@ public class userController {
     private FrmHistorial vistaHistorial;
     private FRNTransaccion vistaTransaccion;
     private FRNMain vistaMain;
+    private FRNUsuarios vistaUsuarios;
+    private FRNAdmin vistaAdmin;
+
+    private boolean isUpdatingTable = false;
 
     public userController(FRNInicio vistaInicio) {
         this.vistaInicio = vistaInicio;
@@ -37,15 +46,12 @@ public class userController {
         this.vistaInicio.btnregistro.addActionListener(new AbrirRegistroAction());
     }
 
-    // ==========================================================
-    // SISTEMA DE NAVEGACIÓN LATERAL CENTRALIZADO
-    // ==========================================================
-    private void registrarEventosNavegacion(javax.swing.JButton btnInicio, 
-                                            javax.swing.JButton btnTransaccion, 
-                                            javax.swing.JButton btnMeta, 
-                                            javax.swing.JButton btnHistorial, 
-                                            javax.swing.JButton btnPerfil, 
-                                            javax.swing.JFrame ventanaActual) {
+    private void registrarEventosNavegacion(javax.swing.JButton btnInicio,
+            javax.swing.JButton btnTransaccion,
+            javax.swing.JButton btnMeta,
+            javax.swing.JButton btnHistorial,
+            javax.swing.JButton btnPerfil,
+            javax.swing.JFrame ventanaActual) {
 
         if (btnInicio != null) {
             btnInicio.addActionListener(e -> {
@@ -70,25 +76,19 @@ public class userController {
 
         if (btnMeta != null) {
             btnMeta.addActionListener(e -> {
-                // ventanaActual.dispose();
-                // abrirPantallaMeta(); // Descomentar cuando tengas la vista
                 JOptionPane.showMessageDialog(ventanaActual, "Pantalla de Metas en construcción");
             });
         }
 
         if (btnPerfil != null) {
             btnPerfil.addActionListener(e -> {
-                // ventanaActual.dispose();
-                // abrirPantallaPerfil(); // Descomentar cuando tengas la vista
                 JOptionPane.showMessageDialog(ventanaActual, "Pantalla de Perfil en construcción");
             });
         }
     }
 
-    // ==========================================================
-    // ACCIONES DE LOGIN Y REGISTRO
-    // ==========================================================
     class AbrirRegistroAction implements ActionListener {
+
         @Override
         public void actionPerformed(ActionEvent e) {
             vistaRegistro = new FRNRegistro();
@@ -100,6 +100,7 @@ public class userController {
     }
 
     class RegistrarUsuarioAction implements ActionListener {
+
         @Override
         public void actionPerformed(ActionEvent e) {
             String nombre = vistaRegistro.txtnombre.getText().trim();
@@ -139,9 +140,17 @@ public class userController {
     }
 
     class IniciarSesionAction implements ActionListener {
+
         @Override
         public void actionPerformed(ActionEvent e) {
             frmlogin vistaLogin = new frmlogin();
+
+            if (vistaLogin.btnAdmin != null) {
+                vistaLogin.btnAdmin.addActionListener(ev -> {
+                    vistaLogin.dispose();
+                    abrirPantallaAdmin();
+                });
+            }
 
             vistaLogin.bntiniciar.addActionListener(new ActionListener() {
                 @Override
@@ -176,7 +185,7 @@ public class userController {
                                 "Error de Autenticación",
                                 JOptionPane.ERROR_MESSAGE);
                     }
-               }
+                }
             });
 
             vistaLogin.setVisible(true);
@@ -185,9 +194,6 @@ public class userController {
         }
     }
 
-    // ==========================================================
-    // PANTALLA PRINCIPAL (MAIN)
-    // ==========================================================
     public void abrirPantallaMain() {
         vistaMain = new FRNMain();
 
@@ -195,7 +201,6 @@ public class userController {
             vistaMain.lblBienvenido.setText("Bienvenido " + SesionUsuario.getUsuarioActual().getNombre());
         }
 
-        // Navegación principal (Tarjetas grandes centrales si aún las conservas)
         if (vistaMain.btnTransaccion != null) {
             vistaMain.btnTransaccion.addActionListener(e -> {
                 vistaMain.dispose();
@@ -209,26 +214,23 @@ public class userController {
             });
         }
 
-        // Navegación lateral
         registrarEventosNavegacion(
-            vistaMain.btnNavInicio, 
-            vistaMain.btnNavTransaccion, 
-            vistaMain.btnNavMeta, 
-            vistaMain.btnNavHistorial, 
-            vistaMain.btnNavPerfil, 
-            vistaMain
+                vistaMain.btnNavInicio,
+                vistaMain.btnNavTransaccion,
+                vistaMain.btnNavMeta,
+                vistaMain.btnNavHistorial,
+                vistaMain.btnNavPerfil,
+                vistaMain
         );
 
-        // Deshabilitar botón actual para indicar en dónde estamos
-        if (vistaMain.btnNavInicio != null) vistaMain.btnNavInicio.setEnabled(false);
+        if (vistaMain.btnNavInicio != null) {
+            vistaMain.btnNavInicio.setEnabled(false);
+        }
 
         vistaMain.setVisible(true);
         vistaMain.setLocationRelativeTo(null);
     }
 
-    // ==========================================================
-    // PANTALLA TRANSACCIÓN
-    // ==========================================================
     public void abrirPantallaTransaccion() {
         vistaTransaccion = new FRNTransaccion();
 
@@ -238,15 +240,31 @@ public class userController {
         vistaTransaccion.btnguardar.addActionListener(new GuardarTransaccionAction());
 
         vistaTransaccion.txtmonto.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            public void insertUpdate(javax.swing.event.DocumentEvent e) { actualizarVistaPrevia(); }
-            public void removeUpdate(javax.swing.event.DocumentEvent e) { actualizarVistaPrevia(); }
-            public void changedUpdate(javax.swing.event.DocumentEvent e) { actualizarVistaPrevia(); }
+            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                actualizarVistaPrevia();
+            }
+
+            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                actualizarVistaPrevia();
+            }
+
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                actualizarVistaPrevia();
+            }
         });
 
         vistaTransaccion.txtdesc.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            public void insertUpdate(javax.swing.event.DocumentEvent e) { actualizarVistaPrevia(); }
-            public void removeUpdate(javax.swing.event.DocumentEvent e) { actualizarVistaPrevia(); }
-            public void changedUpdate(javax.swing.event.DocumentEvent e) { actualizarVistaPrevia(); }
+            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                actualizarVistaPrevia();
+            }
+
+            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                actualizarVistaPrevia();
+            }
+
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                actualizarVistaPrevia();
+            }
         });
 
         vistaTransaccion.cmbtipo.addActionListener(e -> actualizarVistaPrevia());
@@ -256,16 +274,17 @@ public class userController {
         java.time.format.DateTimeFormatter formato = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
         vistaTransaccion.lblFechaPreview.setText(hoy.format(formato));
 
-        // Navegación lateral
         registrarEventosNavegacion(
-            vistaTransaccion.btnNavInicio, 
-            vistaTransaccion.btnNavTransaccion, 
-            vistaTransaccion.btnNavMeta, 
-            vistaTransaccion.btnNavHistorial, 
-            vistaTransaccion.btnNavPerfil, 
-            vistaTransaccion
+                vistaTransaccion.btnNavInicio,
+                vistaTransaccion.btnNavTransaccion,
+                vistaTransaccion.btnNavMeta,
+                vistaTransaccion.btnNavHistorial,
+                vistaTransaccion.btnNavPerfil,
+                vistaTransaccion
         );
-        if (vistaTransaccion.btnNavTransaccion != null) vistaTransaccion.btnNavTransaccion.setEnabled(false);
+        if (vistaTransaccion.btnNavTransaccion != null) {
+            vistaTransaccion.btnNavTransaccion.setEnabled(false);
+        }
 
         vistaTransaccion.setVisible(true);
         vistaTransaccion.setLocationRelativeTo(null);
@@ -330,6 +349,7 @@ public class userController {
     }
 
     class GuardarTransaccionAction implements ActionListener {
+
         @Override
         public void actionPerformed(ActionEvent e) {
             try {
@@ -370,7 +390,7 @@ public class userController {
                 t.setId_usuario(idUsuario);
 
                 TransaccionDB tDB = new TransaccionDB();
-                
+
                 if (tDB.insertarTransaccion(t)) {
                     JOptionPane.showMessageDialog(vistaTransaccion, "Transacción guardada exitosamente.");
                     limpiarFormularioTransaccion();
@@ -391,8 +411,12 @@ public class userController {
         vistaTransaccion.txtmonto.setText("");
         vistaTransaccion.txtdesc.setText("");
         vistaTransaccion.cmbtipo.setSelectedIndex(0);
-        if (vistaTransaccion.cmbcategoria.getItemCount() > 0) vistaTransaccion.cmbcategoria.setSelectedIndex(0);
-        if (vistaTransaccion.cmbmeta.getItemCount() > 0) vistaTransaccion.cmbmeta.setSelectedIndex(0);
+        if (vistaTransaccion.cmbcategoria.getItemCount() > 0) {
+            vistaTransaccion.cmbcategoria.setSelectedIndex(0);
+        }
+        if (vistaTransaccion.cmbmeta.getItemCount() > 0) {
+            vistaTransaccion.cmbmeta.setSelectedIndex(0);
+        }
     }
 
     private void actualizarResumenMensual() {
@@ -417,9 +441,6 @@ public class userController {
         }
     }
 
-    // ==========================================================
-    // PANTALLA HISTORIAL
-    // ==========================================================
     public void abrirPantallaHistorial() {
         vistaHistorial = new FrmHistorial();
 
@@ -428,22 +449,26 @@ public class userController {
         cal.set(java.util.Calendar.DAY_OF_MONTH, 1);
         java.util.Date inicioMes = cal.getTime();
 
-        if (vistaHistorial.dateInicio != null) vistaHistorial.dateInicio.setDate(inicioMes);
-        if (vistaHistorial.dateFin != null) vistaHistorial.dateFin.setDate(hoy);
+        if (vistaHistorial.dateInicio != null) {
+            vistaHistorial.dateInicio.setDate(inicioMes);
+        }
+        if (vistaHistorial.dateFin != null) {
+            vistaHistorial.dateFin.setDate(hoy);
+        }
 
-        // Disparador de la tabla con los JToggleButtons
         vistaHistorial.btnFiltrar.addActionListener(e -> cargarTablaHistorial());
 
-        // Navegación lateral
         registrarEventosNavegacion(
-            vistaHistorial.btnNavInicio, 
-            vistaHistorial.btnNavTransaccion, 
-            vistaHistorial.btnNavMeta, 
-            vistaHistorial.btnNavHistorial, 
-            vistaHistorial.btnNavPerfil, 
-            vistaHistorial
+                vistaHistorial.btnNavInicio,
+                vistaHistorial.btnNavTransaccion,
+                vistaHistorial.btnNavMeta,
+                vistaHistorial.btnNavHistorial,
+                vistaHistorial.btnNavPerfil,
+                vistaHistorial
         );
-        if (vistaHistorial.btnNavHistorial != null) vistaHistorial.btnNavHistorial.setEnabled(false);
+        if (vistaHistorial.btnNavHistorial != null) {
+            vistaHistorial.btnNavHistorial.setEnabled(false);
+        }
 
         cargarTablaHistorial();
 
@@ -452,7 +477,9 @@ public class userController {
     }
 
     private void cargarTablaHistorial() {
-        if (SesionUsuario.getUsuarioActual() == null) return;
+        if (SesionUsuario.getUsuarioActual() == null) {
+            return;
+        }
 
         int idUsuario = SesionUsuario.getUsuarioActual().getId();
 
@@ -468,10 +495,9 @@ public class userController {
             fFin = calFin.getTime();
         }
 
-        // Evaluar botones de tipo (JToggleButton)
         boolean ing = vistaHistorial.btnTipoIngreso.isSelected();
         boolean egr = vistaHistorial.btnTipoEgreso.isSelected();
-        
+
         String filtroTipo = "Todos";
         if (ing && !egr) {
             filtroTipo = "Ingreso";
@@ -479,14 +505,25 @@ public class userController {
             filtroTipo = "Egreso";
         }
 
-        // Evaluar botones de categoría (JToggleButton)
         List<String> seleccionadas = new ArrayList<>();
-        if (vistaHistorial.btnRopa.isSelected()) seleccionadas.add("Ropa");
-        if (vistaHistorial.btnServicios.isSelected()) seleccionadas.add("Servicios");
-        if (vistaHistorial.btnTrans.isSelected()) seleccionadas.add("Transporte");
-        if (vistaHistorial.btnOtros.isSelected()) seleccionadas.add("Otros");
-        if (vistaHistorial.btnComida.isSelected()) seleccionadas.add("Comida");
-        if (vistaHistorial.btnEntre.isSelected()) seleccionadas.add("Entretenimiento");
+        if (vistaHistorial.btnRopa.isSelected()) {
+            seleccionadas.add("Ropa");
+        }
+        if (vistaHistorial.btnServicios.isSelected()) {
+            seleccionadas.add("Servicios");
+        }
+        if (vistaHistorial.btnTrans.isSelected()) {
+            seleccionadas.add("Transporte");
+        }
+        if (vistaHistorial.btnOtros.isSelected()) {
+            seleccionadas.add("Otros");
+        }
+        if (vistaHistorial.btnComida.isSelected()) {
+            seleccionadas.add("Comida");
+        }
+        if (vistaHistorial.btnEntre.isSelected()) {
+            seleccionadas.add("Entretenimiento");
+        }
 
         String filtroCategoria = "Todas";
         if (!seleccionadas.isEmpty()) {
@@ -502,6 +539,147 @@ public class userController {
         if (datos != null) {
             for (Object[] fila : datos) {
                 model.addRow(fila);
+            }
+        }
+    }
+
+    public void abrirPantallaAdmin() {
+        vistaAdmin = new FRNAdmin();
+
+        vistaAdmin.bntiniciar.addActionListener(e -> {
+            String user = vistaAdmin.txtuser.getText().trim();
+            String pass = new String(vistaAdmin.txtpass.getPassword()).trim();
+
+            if (user.equals("admin") && pass.equals("admin123")) {
+                JOptionPane.showMessageDialog(vistaAdmin, "Acceso concedido como Administrador");
+                vistaAdmin.dispose();
+                abrirPantallaUsuarios();
+            } else {
+                JOptionPane.showMessageDialog(vistaAdmin, "Usuario o contraseña de administrador incorrectos", "Error de Acceso", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        if (vistaAdmin.btnSalir != null) {
+            vistaAdmin.btnSalir.addActionListener(e -> {
+                vistaAdmin.dispose();
+                vistaInicio.setVisible(true);
+            });
+        }
+
+        vistaAdmin.setVisible(true);
+        vistaAdmin.setLocationRelativeTo(null);
+    }
+
+    public void abrirPantallaUsuarios() {
+        vistaUsuarios = new FRNUsuarios();
+
+        cargarTablaUsuarios();
+
+        vistaUsuarios.btnEliminar.addActionListener(e -> eliminarUsuarioSeleccionado());
+
+        if (vistaUsuarios.btnSalir != null) {
+            vistaUsuarios.btnSalir.addActionListener(e -> {
+                vistaUsuarios.dispose();
+                vistaInicio.setVisible(true);
+            });
+        }
+
+        vistaUsuarios.setVisible(true);
+        vistaUsuarios.setLocationRelativeTo(null);
+    }
+
+    private void cargarTablaUsuarios() {
+        isUpdatingTable = true;
+
+        UserDB db = new UserDB();
+        List<User> lista = db.consultarUsuario();
+
+        DefaultTableModel model = new DefaultTableModel(
+                new Object[][]{},
+                new String[]{"ID", "Nombre", "Teléfono", "Usuario", "Contraseña"}
+        ) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column != 0;
+            }
+        };
+
+        for (User u : lista) {
+            model.addRow(new Object[]{
+                u.getId(),
+                u.getNombre() == null ? "" : u.getNombre(),
+                u.getTelefono() == null ? "" : u.getTelefono(),
+                u.getUsuario() == null ? "" : u.getUsuario(),
+                u.getPass() == null ? "" : u.getPass()
+            });
+        }
+
+        vistaUsuarios.tablaUsuarios.setModel(model);
+
+        model.addTableModelListener(new TableModelListener() {
+            @Override
+            public void tableChanged(TableModelEvent e) {
+                if (isUpdatingTable) {
+                    return;
+                }
+
+                if (e.getType() == TableModelEvent.UPDATE) {
+                    int fila = e.getFirstRow();
+
+                    try {
+                        Object idObj = model.getValueAt(fila, 0);
+                        if (idObj == null || Integer.parseInt(idObj.toString()) == 0) {
+                            JOptionPane.showMessageDialog(vistaUsuarios, "El ID del usuario es inválido (0). Verifica User.java", "Error", JOptionPane.ERROR_MESSAGE);
+                            return;
+                        }
+
+                        int id = Integer.parseInt(idObj.toString());
+                        String nombre = model.getValueAt(fila, 1) != null ? model.getValueAt(fila, 1).toString() : "";
+                        String telefono = model.getValueAt(fila, 2) != null ? model.getValueAt(fila, 2).toString() : "";
+                        String usuario = model.getValueAt(fila, 3) != null ? model.getValueAt(fila, 3).toString() : "";
+                        String pass = model.getValueAt(fila, 4) != null ? model.getValueAt(fila, 4).toString() : "";
+
+                        User userModificado = new User(id, nombre, usuario, pass, telefono);
+
+                        UserDB udb = new UserDB();
+                        if (udb.actualizarUsuario(userModificado)) {
+                            JOptionPane.showMessageDialog(vistaUsuarios, "Usuario actualizado correctamente.");
+                        } else {
+                            JOptionPane.showMessageDialog(vistaUsuarios, "Error al actualizar el usuario en la BD.", "Error", JOptionPane.ERROR_MESSAGE);
+                            cargarTablaUsuarios();
+                        }
+                    } catch (Exception ex) {
+                        System.out.println("Error procesando actualización: " + ex.getMessage());
+                    }
+                }
+            }
+        });
+
+        isUpdatingTable = false;
+    }
+
+    private void eliminarUsuarioSeleccionado() {
+        int fila = vistaUsuarios.tablaUsuarios.getSelectedRow();
+        if (fila == -1) {
+            JOptionPane.showMessageDialog(vistaUsuarios, "Seleccione un usuario de la tabla para eliminar.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int idUsuario = Integer.parseInt(vistaUsuarios.tablaUsuarios.getValueAt(fila, 0).toString());
+        String nombre = vistaUsuarios.tablaUsuarios.getValueAt(fila, 1).toString();
+
+        int confirm = JOptionPane.showConfirmDialog(vistaUsuarios,
+                "¿Está seguro de eliminar al usuario " + nombre + "?",
+                "Confirmar Eliminación",
+                JOptionPane.YES_NO_OPTION);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            UserDB udb = new UserDB();
+            if (udb.eliminarUsuario(idUsuario)) {
+                JOptionPane.showMessageDialog(vistaUsuarios, "Usuario eliminado correctamente.");
+                cargarTablaUsuarios();
+            } else {
+                JOptionPane.showMessageDialog(vistaUsuarios, "Error al eliminar el usuario.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
