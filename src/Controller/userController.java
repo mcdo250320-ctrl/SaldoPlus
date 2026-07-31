@@ -20,8 +20,10 @@ import View.frmlogin;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
@@ -458,6 +460,11 @@ public class userController {
 
         vistaHistorial.btnFiltrar.addActionListener(e -> cargarTablaHistorial());
 
+        // EVento del botón de Generar Reporte
+        if (vistaHistorial.btnReporte != null) {
+            vistaHistorial.btnReporte.addActionListener(e -> generarReporte());
+        }
+
         registrarEventosNavegacion(
                 vistaHistorial.btnNavInicio,
                 vistaHistorial.btnNavTransaccion,
@@ -474,6 +481,55 @@ public class userController {
 
         vistaHistorial.setVisible(true);
         vistaHistorial.setLocationRelativeTo(null);
+    }
+
+    private void generarReporte() {
+        if (vistaHistorial.tablaHistorial.getRowCount() == 0) {
+            JOptionPane.showMessageDialog(vistaHistorial, "No hay datos cargados en la tabla para exportar.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String[] opciones = {"Excel (.xlsx)", "PDF (.pdf)"};
+        int seleccion = JOptionPane.showOptionDialog(
+                vistaHistorial,
+                "Seleccione el formato para exportar el reporte:",
+                "Generar Reporte de Historial",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                opciones,
+                opciones[0]
+        );
+
+        if (seleccion == -1) return; 
+
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Guardar Reporte");
+
+        if (seleccion == 0) {
+            fileChooser.setSelectedFile(new File("Reporte_Historial.xlsx"));
+        } else {
+            fileChooser.setSelectedFile(new File("Reporte_Historial.pdf"));
+        }
+
+        int userSelection = fileChooser.showSaveDialog(vistaHistorial);
+
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            File archivoGuardar = fileChooser.getSelectedFile();
+            boolean exito;
+
+            if (seleccion == 0) {
+                exito = Utils.ReporteExporter.exportarExcel(vistaHistorial.tablaHistorial, archivoGuardar);
+            } else {
+                exito = Utils.ReporteExporter.exportarPDF(vistaHistorial.tablaHistorial, archivoGuardar);
+            }
+
+            if (exito) {
+                JOptionPane.showMessageDialog(vistaHistorial, "¡Reporte exportado con éxito!\n" + archivoGuardar.getAbsolutePath());
+            } else {
+                JOptionPane.showMessageDialog(vistaHistorial, "Ocurrió un error al intentar generar el archivo.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 
     private void cargarTablaHistorial() {
