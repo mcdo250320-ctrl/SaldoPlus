@@ -108,13 +108,13 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace min="-2" pref="26" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="1" attributes="0">
-                          <Component id="btnTransaccion" min="-2" pref="332" max="-2" attributes="0"/>
-                          <Component id="btnMeta" min="-2" pref="332" max="-2" attributes="0"/>
+                          <Component id="btnCardTransaccion" min="-2" pref="332" max="-2" attributes="0"/>
+                          <Component id="btnCardMeta" min="-2" pref="332" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="btnPerfil" min="-2" pref="332" max="-2" attributes="0"/>
-                          <Component id="btnHistorial" min="-2" pref="332" max="-2" attributes="0"/>
+                          <Component id="btnCardPerfil" min="-2" pref="332" max="-2" attributes="0"/>
+                          <Component id="btnCardHistorial" min="-2" pref="332" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace pref="14" max="32767" attributes="0"/>
                   </Group>
@@ -125,13 +125,13 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace min="-2" pref="22" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="btnTransaccion" alignment="3" min="-2" pref="162" max="-2" attributes="0"/>
-                          <Component id="btnHistorial" alignment="3" min="-2" pref="162" max="-2" attributes="0"/>
+                          <Component id="btnCardTransaccion" alignment="3" min="-2" pref="162" max="-2" attributes="0"/>
+                          <Component id="btnCardHistorial" alignment="3" min="-2" pref="162" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="btnPerfil" alignment="3" min="-2" pref="162" max="-2" attributes="0"/>
-                          <Component id="btnMeta" alignment="3" min="-2" pref="162" max="-2" attributes="0"/>
+                          <Component id="btnCardPerfil" alignment="3" min="-2" pref="162" max="-2" attributes="0"/>
+                          <Component id="btnCardMeta" alignment="3" min="-2" pref="162" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace pref="14" max="32767" attributes="0"/>
                   </Group>
@@ -139,7 +139,7 @@
             </DimensionLayout>
           </Layout>
           <SubComponents>
-            <Component class="javax.swing.JButton" name="btnTransaccion">
+            <Component class="javax.swing.JButton" name="btnCardTransaccion">
               <Properties>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                   <Font name="Nirmala UI" size="18" style="1"/>
@@ -162,7 +162,7 @@
                 <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="1"/>
               </AuxValues>
             </Component>
-            <Component class="javax.swing.JButton" name="btnHistorial">
+            <Component class="javax.swing.JButton" name="btnCardHistorial">
               <Properties>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                   <Font name="Nirmala UI" size="18" style="1"/>
@@ -185,7 +185,7 @@
                 <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="1"/>
               </AuxValues>
             </Component>
-            <Component class="javax.swing.JButton" name="btnPerfil">
+            <Component class="javax.swing.JButton" name="btnCardPerfil">
               <Properties>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                   <Font name="Nirmala UI" size="18" style="1"/>
@@ -208,7 +208,7 @@
                 <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="1"/>
               </AuxValues>
             </Component>
-            <Component class="javax.swing.JButton" name="btnMeta">
+            <Component class="javax.swing.JButton" name="btnCardMeta">
               <Properties>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                   <Font name="Nirmala UI" size="18" style="1"/>

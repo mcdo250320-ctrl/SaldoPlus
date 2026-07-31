@@ -12,18 +12,22 @@ import Model.UserDB;
 import View.FRNAdmin;
 import View.FRNInicio;
 import View.FRNMain;
+import View.FRNPerfil;
 import View.FRNRegistro;
 import View.FRNTransaccion;
 import View.FRNUsuarios;
 import View.FrmHistorial;
 import View.frmlogin;
 
+import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
@@ -36,6 +40,7 @@ public class userController {
     private FrmHistorial vistaHistorial;
     private FRNTransaccion vistaTransaccion;
     private FRNMain vistaMain;
+    private FRNPerfil vistaPerfil;
     private FRNUsuarios vistaUsuarios;
     private FRNAdmin vistaAdmin;
 
@@ -46,6 +51,22 @@ public class userController {
 
         this.vistaInicio.btninicio.addActionListener(new IniciarSesionAction());
         this.vistaInicio.btnregistro.addActionListener(new AbrirRegistroAction());
+    }
+
+    private void aplicarImagenEscalada(JLabel label, String rutaFoto) {
+        if (label == null || rutaFoto == null || rutaFoto.isEmpty()) return;
+
+        File archivo = new File(rutaFoto);
+        if (!archivo.exists()) return;
+
+        ImageIcon iconOriginal = new ImageIcon(rutaFoto);
+        int ancho = label.getWidth() > 0 ? label.getWidth() : 120;
+        int alto = label.getHeight() > 0 ? label.getHeight() : 120;
+
+        Image imgEscalada = iconOriginal.getImage().getScaledInstance(ancho, alto, Image.SCALE_SMOOTH);
+        label.setIcon(new ImageIcon(imgEscalada));
+        label.revalidate();
+        label.repaint();
     }
 
     private void registrarEventosNavegacion(javax.swing.JButton btnInicio,
@@ -84,7 +105,8 @@ public class userController {
 
         if (btnPerfil != null) {
             btnPerfil.addActionListener(e -> {
-                JOptionPane.showMessageDialog(ventanaActual, "Pantalla de Perfil en construcción");
+                ventanaActual.dispose();
+                abrirPantallaPerfil();
             });
         }
     }
@@ -203,16 +225,27 @@ public class userController {
             vistaMain.lblBienvenido.setText("Bienvenido " + SesionUsuario.getUsuarioActual().getNombre());
         }
 
-        if (vistaMain.btnTransaccion != null) {
-            vistaMain.btnTransaccion.addActionListener(e -> {
+        if (vistaMain.btnCardTransaccion != null) {
+            vistaMain.btnCardTransaccion.addActionListener(e -> {
                 vistaMain.dispose();
                 abrirPantallaTransaccion();
             });
         }
-        if (vistaMain.btnHistorial != null) {
-            vistaMain.btnHistorial.addActionListener(e -> {
+        if (vistaMain.btnCardHistorial != null) {
+            vistaMain.btnCardHistorial.addActionListener(e -> {
                 vistaMain.dispose();
                 abrirPantallaHistorial();
+            });
+        }
+        if (vistaMain.btnCardMeta != null) {
+            vistaMain.btnCardMeta.addActionListener(e -> {
+                JOptionPane.showMessageDialog(vistaMain, "Pantalla de Metas en construcción");
+            });
+        }
+        if (vistaMain.btnCardPerfil != null) {
+            vistaMain.btnCardPerfil.addActionListener(e -> {
+                vistaMain.dispose();
+                abrirPantallaPerfil();
             });
         }
 
@@ -231,6 +264,146 @@ public class userController {
 
         vistaMain.setVisible(true);
         vistaMain.setLocationRelativeTo(null);
+    }
+
+    public void abrirPantallaPerfil() {
+        vistaPerfil = new FRNPerfil();
+        User usuarioActual = SesionUsuario.getUsuarioActual();
+
+        if (usuarioActual != null) {
+            vistaPerfil.txtNombre.setText(usuarioActual.getNombre());
+            vistaPerfil.txtUsuario.setText(usuarioActual.getUsuario());
+            vistaPerfil.txtTelefono.setText(usuarioActual.getTelefono() != null ? usuarioActual.getTelefono() : "");
+
+            if (vistaPerfil.avatarPerfil != null && usuarioActual.getFotoUrl() != null) {
+                aplicarImagenEscalada(vistaPerfil.avatarPerfil, usuarioActual.getFotoUrl());
+                vistaPerfil.avatarPerfil.repaint();
+            }
+        }
+
+        if (vistaPerfil.btnCambiarFoto != null) {
+            vistaPerfil.btnCambiarFoto.addActionListener(e -> {
+                if (usuarioActual == null) return;
+
+                String rutaGuardada = Utils.GestionFotoService.seleccionarYGuardarFoto(usuarioActual.getId());
+
+                if (rutaGuardada != null) {
+                    UserDB db = new UserDB();
+                    if (db.actualizarFotoUsuario(usuarioActual.getId(), rutaGuardada)) {
+                        usuarioActual.setFotoUrl(rutaGuardada);
+                        aplicarImagenEscalada(vistaPerfil.avatarPerfil, rutaGuardada);
+                        vistaPerfil.avatarPerfil.revalidate();
+                        vistaPerfil.avatarPerfil.repaint();
+                        vistaPerfil.repaint();
+                        JOptionPane.showMessageDialog(vistaPerfil, "¡Foto de perfil actualizada correctamente!");
+                    } else {
+                        JOptionPane.showMessageDialog(vistaPerfil, "Error al guardar la foto en la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            });
+        }
+
+        if (vistaPerfil.btnActualizar != null) {
+            vistaPerfil.btnActualizar.addActionListener(e -> {
+                if (usuarioActual == null) return;
+
+                String nuevoNombre = vistaPerfil.txtNombre.getText().trim();
+                String nuevoUsuario = vistaPerfil.txtUsuario.getText().trim();
+                String nuevoTelefono = vistaPerfil.txtTelefono.getText().trim();
+
+                if (nuevoNombre.isEmpty() || nuevoUsuario.isEmpty()) {
+                    JOptionPane.showMessageDialog(vistaPerfil, "Nombre y Usuario son obligatorios.", "Aviso", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                usuarioActual.setNombre(nuevoNombre);
+                usuarioActual.setUsuario(nuevoUsuario);
+                usuarioActual.setTelefono(nuevoTelefono);
+
+                UserDB db = new UserDB();
+                if (db.actualizarUsuario(usuarioActual)) {
+                    JOptionPane.showMessageDialog(vistaPerfil, "¡Datos personales actualizados correctamente!");
+                } else {
+                    JOptionPane.showMessageDialog(vistaPerfil, "Error al actualizar la información en la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            });
+        }
+
+        if (vistaPerfil.btnGuardar != null) {
+            vistaPerfil.btnGuardar.addActionListener(e -> {
+                if (usuarioActual == null) return;
+
+                String passActual = new String(vistaPerfil.txtPassActual.getPassword()).trim();
+                String passNueva = new String(vistaPerfil.txtPassNueva.getPassword()).trim();
+
+                if (passActual.isEmpty() || passNueva.isEmpty()) {
+                    JOptionPane.showMessageDialog(vistaPerfil, "Ingrese su contraseña actual y la nueva contraseña.", "Aviso", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                if (!passActual.equals(usuarioActual.getPass())) {
+                    JOptionPane.showMessageDialog(vistaPerfil, "La contraseña actual es incorrecta.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                usuarioActual.setPass(passNueva);
+                UserDB db = new UserDB();
+                if (db.actualizarUsuario(usuarioActual)) {
+                    JOptionPane.showMessageDialog(vistaPerfil, "¡Contraseña modificada con éxito!");
+                    vistaPerfil.txtPassActual.setText("");
+                    vistaPerfil.txtPassNueva.setText("");
+                } else {
+                    JOptionPane.showMessageDialog(vistaPerfil, "Error al actualizar la contraseña.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            });
+        }
+
+        if (vistaPerfil.btnCancelar != null) {
+            vistaPerfil.btnCancelar.addActionListener(e -> {
+                if (usuarioActual != null) {
+                    vistaPerfil.txtNombre.setText(usuarioActual.getNombre());
+                    vistaPerfil.txtUsuario.setText(usuarioActual.getUsuario());
+                    vistaPerfil.txtTelefono.setText(usuarioActual.getTelefono() != null ? usuarioActual.getTelefono() : "");
+                }
+            });
+        }
+
+        if (vistaPerfil.btnCerrarSesion != null) {
+            vistaPerfil.btnCerrarSesion.addActionListener(e -> {
+                int confirm = JOptionPane.showConfirmDialog(
+                        vistaPerfil,
+                        "¿Está seguro de que desea cerrar sesión?",
+                        "Cerrar Sesión",
+                        JOptionPane.YES_NO_OPTION
+                );
+
+                if (confirm == JOptionPane.YES_OPTION) {
+                    SesionUsuario.cerrarSesion();
+                    vistaPerfil.dispose();
+                    if (vistaInicio == null) {
+                        vistaInicio = new FRNInicio();
+                    }
+                    vistaInicio.setVisible(true);
+                    vistaInicio.setLocationRelativeTo(null);
+                }
+            });
+        }
+
+        registrarEventosNavegacion(
+                vistaPerfil.btnNavInicio,
+                vistaPerfil.btnNavTransaccion,
+                vistaPerfil.btnNavMeta,
+                vistaPerfil.btnNavHistorial,
+                vistaPerfil.btnNavPerfil,
+                vistaPerfil
+        );
+
+        if (vistaPerfil.btnNavPerfil != null) {
+            vistaPerfil.btnNavPerfil.setEnabled(false);
+        }
+
+        vistaPerfil.setVisible(true);
+        vistaPerfil.setLocationRelativeTo(null);
     }
 
     public void abrirPantallaTransaccion() {
@@ -460,7 +633,6 @@ public class userController {
 
         vistaHistorial.btnFiltrar.addActionListener(e -> cargarTablaHistorial());
 
-        // EVento del botón de Generar Reporte
         if (vistaHistorial.btnReporte != null) {
             vistaHistorial.btnReporte.addActionListener(e -> generarReporte());
         }
@@ -501,7 +673,7 @@ public class userController {
                 opciones[0]
         );
 
-        if (seleccion == -1) return; 
+        if (seleccion == -1) return;
 
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Guardar Reporte");

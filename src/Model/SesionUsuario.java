@@ -14,4 +14,7 @@ public class SesionUsuario {
     public static void setUsuarioActual(User usuario) {
         usuarioActual = usuario;
     }
+    public static void cerrarSesion() {
+    usuarioActual = null;
+}
 }

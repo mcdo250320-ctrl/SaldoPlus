@@ -30,10 +30,10 @@ public class FRNMain extends javax.swing.JFrame {
 
         pane = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
-        btnTransaccion = new javax.swing.JButton();
-        btnHistorial = new javax.swing.JButton();
-        btnPerfil = new javax.swing.JButton();
-        btnMeta = new javax.swing.JButton();
+        btnCardTransaccion = new javax.swing.JButton();
+        btnCardHistorial = new javax.swing.JButton();
+        btnCardPerfil = new javax.swing.JButton();
+        btnCardMeta = new javax.swing.JButton();
         lblBienvenido = new javax.swing.JLabel();
         jPanel4 = new javax.swing.JPanel();
         jPanel3 = new javax.swing.JPanel();
@@ -50,41 +50,41 @@ public class FRNMain extends javax.swing.JFrame {
 
         jPanel2.setBackground(new java.awt.Color(4, 57, 36));
 
-        btnTransaccion.setFont(new java.awt.Font("Nirmala UI", 1, 18)); // NOI18N
-        btnTransaccion.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagenes/icons8-transacción-32.png"))); // NOI18N
-        btnTransaccion.setText("Transaccion");
-        btnTransaccion.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
-        btnTransaccion.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        btnTransaccion.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
-        btnTransaccion.setIconTextGap(160);
-        btnTransaccion.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
+        btnCardTransaccion.setFont(new java.awt.Font("Nirmala UI", 1, 18)); // NOI18N
+        btnCardTransaccion.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagenes/icons8-transacción-32.png"))); // NOI18N
+        btnCardTransaccion.setText("Transaccion");
+        btnCardTransaccion.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        btnCardTransaccion.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        btnCardTransaccion.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
+        btnCardTransaccion.setIconTextGap(160);
+        btnCardTransaccion.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
 
-        btnHistorial.setFont(new java.awt.Font("Nirmala UI", 1, 18)); // NOI18N
-        btnHistorial.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagenes/icons8-pasado-30.png"))); // NOI18N
-        btnHistorial.setText("Historial");
-        btnHistorial.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
-        btnHistorial.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        btnHistorial.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
-        btnHistorial.setIconTextGap(190);
-        btnHistorial.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
+        btnCardHistorial.setFont(new java.awt.Font("Nirmala UI", 1, 18)); // NOI18N
+        btnCardHistorial.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagenes/icons8-pasado-30.png"))); // NOI18N
+        btnCardHistorial.setText("Historial");
+        btnCardHistorial.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        btnCardHistorial.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        btnCardHistorial.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
+        btnCardHistorial.setIconTextGap(190);
+        btnCardHistorial.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
 
-        btnPerfil.setFont(new java.awt.Font("Nirmala UI", 1, 18)); // NOI18N
-        btnPerfil.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagenes/icons8-usuario-24 (1).png"))); // NOI18N
-        btnPerfil.setText("Perfil");
-        btnPerfil.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
-        btnPerfil.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        btnPerfil.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
-        btnPerfil.setIconTextGap(210);
-        btnPerfil.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
+        btnCardPerfil.setFont(new java.awt.Font("Nirmala UI", 1, 18)); // NOI18N
+        btnCardPerfil.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagenes/icons8-usuario-24 (1).png"))); // NOI18N
+        btnCardPerfil.setText("Perfil");
+        btnCardPerfil.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        btnCardPerfil.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        btnCardPerfil.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
+        btnCardPerfil.setIconTextGap(210);
+        btnCardPerfil.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
 
-        btnMeta.setFont(new java.awt.Font("Nirmala UI", 1, 18)); // NOI18N
-        btnMeta.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagenes/icons8-bandera-de-llegada-24.png"))); // NOI18N
-        btnMeta.setText("Meta de ahorro");
-        btnMeta.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
-        btnMeta.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        btnMeta.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
-        btnMeta.setIconTextGap(130);
-        btnMeta.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
+        btnCardMeta.setFont(new java.awt.Font("Nirmala UI", 1, 18)); // NOI18N
+        btnCardMeta.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagenes/icons8-bandera-de-llegada-24.png"))); // NOI18N
+        btnCardMeta.setText("Meta de ahorro");
+        btnCardMeta.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        btnCardMeta.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        btnCardMeta.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
+        btnCardMeta.setIconTextGap(130);
+        btnCardMeta.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -93,12 +93,12 @@ public class FRNMain extends javax.swing.JFrame {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addGap(26, 26, 26)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(btnTransaccion, javax.swing.GroupLayout.PREFERRED_SIZE, 332, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnMeta, javax.swing.GroupLayout.PREFERRED_SIZE, 332, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(btnCardTransaccion, javax.swing.GroupLayout.PREFERRED_SIZE, 332, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnCardMeta, javax.swing.GroupLayout.PREFERRED_SIZE, 332, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(btnPerfil, javax.swing.GroupLayout.PREFERRED_SIZE, 332, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnHistorial, javax.swing.GroupLayout.PREFERRED_SIZE, 332, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(btnCardPerfil, javax.swing.GroupLayout.PREFERRED_SIZE, 332, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnCardHistorial, javax.swing.GroupLayout.PREFERRED_SIZE, 332, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(14, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
@@ -106,12 +106,12 @@ public class FRNMain extends javax.swing.JFrame {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addGap(22, 22, 22)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btnTransaccion, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnHistorial, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(btnCardTransaccion, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnCardHistorial, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btnPerfil, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnMeta, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(btnCardPerfil, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnCardMeta, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(14, Short.MAX_VALUE))
         );
 
@@ -277,15 +277,15 @@ public class FRNMain extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    public javax.swing.JButton btnHistorial;
-    public javax.swing.JButton btnMeta;
+    public javax.swing.JButton btnCardHistorial;
+    public javax.swing.JButton btnCardMeta;
+    public javax.swing.JButton btnCardPerfil;
+    public javax.swing.JButton btnCardTransaccion;
     public javax.swing.JButton btnNavHistorial;
     public javax.swing.JButton btnNavInicio;
     public javax.swing.JButton btnNavMeta;
     public javax.swing.JButton btnNavPerfil;
     public javax.swing.JButton btnNavTransaccion;
-    public javax.swing.JButton btnPerfil;
-    public javax.swing.JButton btnTransaccion;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
