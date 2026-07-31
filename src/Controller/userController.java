@@ -37,6 +37,57 @@ public class userController {
         this.vistaInicio.btnregistro.addActionListener(new AbrirRegistroAction());
     }
 
+    // ==========================================================
+    // SISTEMA DE NAVEGACIÓN LATERAL CENTRALIZADO
+    // ==========================================================
+    private void registrarEventosNavegacion(javax.swing.JButton btnInicio, 
+                                            javax.swing.JButton btnTransaccion, 
+                                            javax.swing.JButton btnMeta, 
+                                            javax.swing.JButton btnHistorial, 
+                                            javax.swing.JButton btnPerfil, 
+                                            javax.swing.JFrame ventanaActual) {
+
+        if (btnInicio != null) {
+            btnInicio.addActionListener(e -> {
+                ventanaActual.dispose();
+                abrirPantallaMain();
+            });
+        }
+
+        if (btnTransaccion != null) {
+            btnTransaccion.addActionListener(e -> {
+                ventanaActual.dispose();
+                abrirPantallaTransaccion();
+            });
+        }
+
+        if (btnHistorial != null) {
+            btnHistorial.addActionListener(e -> {
+                ventanaActual.dispose();
+                abrirPantallaHistorial();
+            });
+        }
+
+        if (btnMeta != null) {
+            btnMeta.addActionListener(e -> {
+                // ventanaActual.dispose();
+                // abrirPantallaMeta(); // Descomentar cuando tengas la vista
+                JOptionPane.showMessageDialog(ventanaActual, "Pantalla de Metas en construcción");
+            });
+        }
+
+        if (btnPerfil != null) {
+            btnPerfil.addActionListener(e -> {
+                // ventanaActual.dispose();
+                // abrirPantallaPerfil(); // Descomentar cuando tengas la vista
+                JOptionPane.showMessageDialog(ventanaActual, "Pantalla de Perfil en construcción");
+            });
+        }
+    }
+
+    // ==========================================================
+    // ACCIONES DE LOGIN Y REGISTRO
+    // ==========================================================
     class AbrirRegistroAction implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -51,7 +102,6 @@ public class userController {
     class RegistrarUsuarioAction implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-
             String nombre = vistaRegistro.txtnombre.getText().trim();
             String user = vistaRegistro.txtuser.getText().trim();
             String pass = new String(vistaRegistro.txtpass.getPassword()).trim();
@@ -79,7 +129,6 @@ public class userController {
 
                 vistaRegistro.dispose();
                 vistaInicio.setVisible(true);
-
             } else {
                 JOptionPane.showMessageDialog(vistaRegistro,
                         "Error al registrar en la base de datos. Revisa la consola.",
@@ -92,7 +141,6 @@ public class userController {
     class IniciarSesionAction implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-
             frmlogin vistaLogin = new frmlogin();
 
             vistaLogin.bntiniciar.addActionListener(new ActionListener() {
@@ -122,7 +170,6 @@ public class userController {
 
                         vistaLogin.dispose();
                         abrirPantallaMain();
-
                     } else {
                         JOptionPane.showMessageDialog(vistaLogin,
                                 "Usuario o contraseña incorrectos.",
@@ -138,6 +185,9 @@ public class userController {
         }
     }
 
+    // ==========================================================
+    // PANTALLA PRINCIPAL (MAIN)
+    // ==========================================================
     public void abrirPantallaMain() {
         vistaMain = new FRNMain();
 
@@ -145,20 +195,40 @@ public class userController {
             vistaMain.lblBienvenido.setText("Bienvenido " + SesionUsuario.getUsuarioActual().getNombre());
         }
 
-        vistaMain.btnTransaccion.addActionListener(e -> {
-            vistaMain.dispose();
-            abrirPantallaTransaccion();
-        });
+        // Navegación principal (Tarjetas grandes centrales si aún las conservas)
+        if (vistaMain.btnTransaccion != null) {
+            vistaMain.btnTransaccion.addActionListener(e -> {
+                vistaMain.dispose();
+                abrirPantallaTransaccion();
+            });
+        }
+        if (vistaMain.btnHistorial != null) {
+            vistaMain.btnHistorial.addActionListener(e -> {
+                vistaMain.dispose();
+                abrirPantallaHistorial();
+            });
+        }
 
-        vistaMain.btnHistorial.addActionListener(e -> {
-            vistaMain.dispose();
-            abrirPantallaHistorial();
-        });
+        // Navegación lateral
+        registrarEventosNavegacion(
+            vistaMain.btnNavInicio, 
+            vistaMain.btnNavTransaccion, 
+            vistaMain.btnNavMeta, 
+            vistaMain.btnNavHistorial, 
+            vistaMain.btnNavPerfil, 
+            vistaMain
+        );
+
+        // Deshabilitar botón actual para indicar en dónde estamos
+        if (vistaMain.btnNavInicio != null) vistaMain.btnNavInicio.setEnabled(false);
 
         vistaMain.setVisible(true);
         vistaMain.setLocationRelativeTo(null);
     }
 
+    // ==========================================================
+    // PANTALLA TRANSACCIÓN
+    // ==========================================================
     public void abrirPantallaTransaccion() {
         vistaTransaccion = new FRNTransaccion();
 
@@ -186,6 +256,17 @@ public class userController {
         java.time.format.DateTimeFormatter formato = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
         vistaTransaccion.lblFechaPreview.setText(hoy.format(formato));
 
+        // Navegación lateral
+        registrarEventosNavegacion(
+            vistaTransaccion.btnNavInicio, 
+            vistaTransaccion.btnNavTransaccion, 
+            vistaTransaccion.btnNavMeta, 
+            vistaTransaccion.btnNavHistorial, 
+            vistaTransaccion.btnNavPerfil, 
+            vistaTransaccion
+        );
+        if (vistaTransaccion.btnNavTransaccion != null) vistaTransaccion.btnNavTransaccion.setEnabled(false);
+
         vistaTransaccion.setVisible(true);
         vistaTransaccion.setLocationRelativeTo(null);
         actualizarResumenMensual();
@@ -206,7 +287,7 @@ public class userController {
 
         String descStr = vistaTransaccion.txtdesc.getText().trim();
         if (descStr.isEmpty()) {
-            vistaTransaccion.lblDescPreview.setText("Descripción del ingreso aparecerá aquí...");
+            vistaTransaccion.lblDescPreview.setText("Descripción aparecerá aquí...");
         } else {
             vistaTransaccion.lblDescPreview.setText(descStr);
         }
@@ -336,6 +417,9 @@ public class userController {
         }
     }
 
+    // ==========================================================
+    // PANTALLA HISTORIAL
+    // ==========================================================
     public void abrirPantallaHistorial() {
         vistaHistorial = new FrmHistorial();
 
@@ -347,8 +431,19 @@ public class userController {
         if (vistaHistorial.dateInicio != null) vistaHistorial.dateInicio.setDate(inicioMes);
         if (vistaHistorial.dateFin != null) vistaHistorial.dateFin.setDate(hoy);
 
-        // El botón Filtrar evalúa directo la propiedad isSelected() de los JToggleButton
+        // Disparador de la tabla con los JToggleButtons
         vistaHistorial.btnFiltrar.addActionListener(e -> cargarTablaHistorial());
+
+        // Navegación lateral
+        registrarEventosNavegacion(
+            vistaHistorial.btnNavInicio, 
+            vistaHistorial.btnNavTransaccion, 
+            vistaHistorial.btnNavMeta, 
+            vistaHistorial.btnNavHistorial, 
+            vistaHistorial.btnNavPerfil, 
+            vistaHistorial
+        );
+        if (vistaHistorial.btnNavHistorial != null) vistaHistorial.btnNavHistorial.setEnabled(false);
 
         cargarTablaHistorial();
 
@@ -373,7 +468,7 @@ public class userController {
             fFin = calFin.getTime();
         }
 
-        // EVALUACIÓN DE BOTONES DE TIPO
+        // Evaluar botones de tipo (JToggleButton)
         boolean ing = vistaHistorial.btnTipoIngreso.isSelected();
         boolean egr = vistaHistorial.btnTipoEgreso.isSelected();
         
@@ -382,9 +477,9 @@ public class userController {
             filtroTipo = "Ingreso";
         } else if (egr && !ing) {
             filtroTipo = "Egreso";
-        } // Si ambos o ninguno están presionados, se mantiene como "Todos"
+        }
 
-        // EVALUACIÓN DE BOTONES DE CATEGORÍA
+        // Evaluar botones de categoría (JToggleButton)
         List<String> seleccionadas = new ArrayList<>();
         if (vistaHistorial.btnRopa.isSelected()) seleccionadas.add("Ropa");
         if (vistaHistorial.btnServicios.isSelected()) seleccionadas.add("Servicios");
