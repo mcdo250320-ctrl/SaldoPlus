@@ -1,0 +1,7 @@
+# Carpeta de imágenes cargadas localmente por los usuarios
+uploads/
+
+# Archivos compilados e temporales de NetBeans / Java (por si no los tenías)
+/build/
+/dist/
+/nbproject/private/

@@ -10,6 +10,11 @@ package Model;
  */
 public class User {
     
+    private String fotoUrl;
+
+    public String getFotoUrl() { return fotoUrl; }
+    public void setFotoUrl(String fotoUrl) { this.fotoUrl = fotoUrl; }
+    
     private int id;
     private String nombre;
     private String usuario;
