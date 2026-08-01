@@ -1,13 +1,5 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package Model;
 
-/**
- *
- * @author demia
- */
 public class Meta {
     private int id;
     private float monto;
@@ -15,7 +7,7 @@ public class Meta {
     private String descrip;
     private int id_usuario;
     
-    public Meta(){};
+    public Meta(){}
     
     public Meta(float monto, String fecha, String descrip, int id_usuario){
         this.monto = monto;
@@ -24,7 +16,8 @@ public class Meta {
         this.id_usuario = id_usuario;
     }
     
-    public Meta(int id,float monto, String fecha, String descrip, int id_usuario){
+    public Meta(int id, float monto, String fecha, String descrip, int id_usuario){
+        this.id = id;
         this.monto = monto;
         this.fecha = fecha;
         this.descrip = descrip;
@@ -72,8 +65,7 @@ public class Meta {
     }
     
     @Override
-public String toString() {
-    return descrip;
-}
-    
+    public String toString() {
+        return descrip;
+    }
 }

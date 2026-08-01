@@ -12,6 +12,7 @@ import Model.UserDB;
 import View.FRNAdmin;
 import View.FRNInicio;
 import View.FRNMain;
+import View.FRNMeta;
 import View.FRNPerfil;
 import View.FRNRegistro;
 import View.FRNTransaccion;
@@ -23,12 +24,15 @@ import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
@@ -43,7 +47,10 @@ public class userController {
     private FRNPerfil vistaPerfil;
     private FRNUsuarios vistaUsuarios;
     private FRNAdmin vistaAdmin;
+    private FRNMeta vistaMeta;
 
+    private Meta metaSeleccionadaActual = null;
+    private List<Meta> listaMetasUsuario = new ArrayList<>();
     private boolean isUpdatingTable = false;
 
     public userController(FRNInicio vistaInicio) {
@@ -99,7 +106,8 @@ public class userController {
 
         if (btnMeta != null) {
             btnMeta.addActionListener(e -> {
-                JOptionPane.showMessageDialog(ventanaActual, "Pantalla de Metas en construcción");
+                ventanaActual.dispose();
+                abrirPantallaMeta();
             });
         }
 
@@ -239,7 +247,8 @@ public class userController {
         }
         if (vistaMain.btnCardMeta != null) {
             vistaMain.btnCardMeta.addActionListener(e -> {
-                JOptionPane.showMessageDialog(vistaMain, "Pantalla de Metas en construcción");
+                vistaMain.dispose();
+                abrirPantallaMeta();
             });
         }
         if (vistaMain.btnCardPerfil != null) {
@@ -264,6 +273,195 @@ public class userController {
 
         vistaMain.setVisible(true);
         vistaMain.setLocationRelativeTo(null);
+    }
+
+    public void abrirPantallaMeta() {
+        vistaMeta = new FRNMeta();
+
+        cargarTablaMetas();
+
+        if (vistaMeta.btnGenerarMeta != null) {
+            vistaMeta.btnGenerarMeta.addActionListener(e -> guardarNuevaMeta());
+        }
+
+        if (vistaMeta.btnAportar != null) {
+            vistaMeta.btnAportar.addActionListener(e -> aportarAMetaSeleccionada());
+        }
+
+        if (vistaMeta.tablaMetas != null) {
+            vistaMeta.tablaMetas.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+                @Override
+                public void valueChanged(ListSelectionEvent e) {
+                    if (!e.getValueIsAdjusting()) {
+                        int filaSeleccionada = vistaMeta.tablaMetas.getSelectedRow();
+                        if (filaSeleccionada != -1 && filaSeleccionada < listaMetasUsuario.size()) {
+                            metaSeleccionadaActual = listaMetasUsuario.get(filaSeleccionada);
+                            actualizarTarjetaProgresoMeta(metaSeleccionadaActual);
+                        }
+                    }
+                }
+            });
+        }
+
+        registrarEventosNavegacion(
+                vistaMeta.btnNavInicio,
+                vistaMeta.btnNavTransaccion,
+                vistaMeta.btnNavMeta,
+                vistaMeta.btnNavHistorial,
+                vistaMeta.btnNavPerfil,
+                vistaMeta
+        );
+
+        if (vistaMeta.btnNavMeta != null) {
+            vistaMeta.btnNavMeta.setEnabled(false);
+        }
+
+        vistaMeta.setVisible(true);
+        vistaMeta.setLocationRelativeTo(null);
+    }
+
+    private void cargarTablaMetas() {
+        if (SesionUsuario.getUsuarioActual() == null) return;
+
+        int idUsuario = SesionUsuario.getUsuarioActual().getId();
+        MetaDB db = new MetaDB();
+        listaMetasUsuario = db.obtenerMetasPorUsuario(idUsuario);
+
+        DefaultTableModel model = new DefaultTableModel(
+                new Object[][]{},
+                new String[]{"ID", "Descripción", "Monto Objetivo", "Fecha Límite"}
+        ) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        if (listaMetasUsuario != null) {
+            for (Meta m : listaMetasUsuario) {
+                model.addRow(new Object[]{
+                    m.getId(),
+                    m.getDescrip(),
+                    String.format("$ %.2f", m.getMonto()),
+                    m.getFecha() != null ? m.getFecha() : "Sin fecha"
+                });
+            }
+        }
+
+        if (vistaMeta.tablaMetas != null) {
+            vistaMeta.tablaMetas.setModel(model);
+
+            if (listaMetasUsuario != null && !listaMetasUsuario.isEmpty()) {
+                vistaMeta.tablaMetas.setRowSelectionInterval(0, 0);
+                metaSeleccionadaActual = listaMetasUsuario.get(0);
+                actualizarTarjetaProgresoMeta(metaSeleccionadaActual);
+            } else {
+                limpiarTarjetaProgresoMeta();
+            }
+        }
+    }
+
+    private void guardarNuevaMeta() {
+        if (SesionUsuario.getUsuarioActual() == null) return;
+
+        try {
+            String montoStr = vistaMeta.txtMonto.getText().trim();
+            String descStr = vistaMeta.txtDescripcion.getText().trim();
+            java.util.Date fechaUtil = vistaMeta.dateChooserFecha.getDate();
+
+            if (montoStr.isEmpty() || descStr.isEmpty() || fechaUtil == null) {
+                JOptionPane.showMessageDialog(vistaMeta, "Por favor llene el monto, la descripción y seleccione la fecha objetivo.", "Campos incompletos", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            float montoObj = Float.parseFloat(montoStr);
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            String fechaFormatted = sdf.format(fechaUtil);
+
+            Meta nuevaMeta = new Meta();
+            nuevaMeta.setMonto(montoObj);
+            nuevaMeta.setFecha(fechaFormatted);
+            nuevaMeta.setDescrip(descStr);
+            nuevaMeta.setId_usuario(SesionUsuario.getUsuarioActual().getId());
+
+            MetaDB db = new MetaDB();
+            if (db.insertarMeta(nuevaMeta)) {
+                JOptionPane.showMessageDialog(vistaMeta, "¡Meta de ahorro registrada exitosamente!");
+                vistaMeta.txtMonto.setText("");
+                vistaMeta.txtDescripcion.setText("");
+                vistaMeta.dateChooserFecha.setDate(null);
+                cargarTablaMetas();
+            } else {
+                JOptionPane.showMessageDialog(vistaMeta, "Error al guardar la meta en la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(vistaMeta, "Ingrese un monto numérico válido.", "Error", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    private void actualizarTarjetaProgresoMeta(Meta meta) {
+        if (meta == null || vistaMeta == null) return;
+
+        TransaccionDB tDB = new TransaccionDB();
+        float ahorrado = tDB.obtenerTotalAhorradoPorMeta(meta.getId());
+        float objetivo = meta.getMonto();
+
+        int porcentaje = 0;
+        if (objetivo > 0) {
+            porcentaje = (int) ((ahorrado / objetivo) * 100);
+            if (porcentaje > 100) porcentaje = 100;
+        }
+
+        if (vistaMeta.lblNombreMeta != null) {
+            vistaMeta.lblNombreMeta.setText(meta.getDescrip());
+        }
+
+        if (vistaMeta.lblAhorradoObjetivo != null) {
+            vistaMeta.lblAhorradoObjetivo.setText(String.format("$ %.2f / $ %.2f", ahorrado, objetivo));
+        }
+
+        if (vistaMeta.barraProgreso != null) {
+            vistaMeta.barraProgreso.setOpaque(true);
+            vistaMeta.barraProgreso.setStringPainted(true);
+            vistaMeta.barraProgreso.setValue(porcentaje);
+            vistaMeta.barraProgreso.setString(porcentaje + "% Completado");
+
+            if (porcentaje < 40) {
+                vistaMeta.barraProgreso.setForeground(new java.awt.Color(204, 36, 36));
+            } else if (porcentaje <= 80) {
+                vistaMeta.barraProgreso.setForeground(new java.awt.Color(230, 160, 20));
+            } else {
+                vistaMeta.barraProgreso.setForeground(new java.awt.Color(34, 153, 84));
+            }
+        }
+    }
+
+    private void limpiarTarjetaProgresoMeta() {
+        if (vistaMeta == null) return;
+
+        if (vistaMeta.lblNombreMeta != null) {
+            vistaMeta.lblNombreMeta.setText("Sin metas registradas");
+        }
+        if (vistaMeta.lblAhorradoObjetivo != null) {
+            vistaMeta.lblAhorradoObjetivo.setText("$ 0.00 / $ 0.00");
+        }
+        if (vistaMeta.barraProgreso != null) {
+            vistaMeta.barraProgreso.setValue(0);
+            vistaMeta.barraProgreso.setStringPainted(true);
+            vistaMeta.barraProgreso.setString("0% Completado");
+            vistaMeta.barraProgreso.setForeground(new java.awt.Color(204, 36, 36));
+        }
+    }
+
+    private void aportarAMetaSeleccionada() {
+        if (metaSeleccionadaActual == null) {
+            JOptionPane.showMessageDialog(vistaMeta, "Seleccione una meta de la tabla para aportar.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        vistaMeta.dispose();
+        abrirPantallaTransaccion(metaSeleccionadaActual);
     }
 
     public void abrirPantallaPerfil() {
@@ -407,10 +605,30 @@ public class userController {
     }
 
     public void abrirPantallaTransaccion() {
+        abrirPantallaTransaccion(null);
+    }
+
+    public void abrirPantallaTransaccion(Meta metaPreseleccionada) {
         vistaTransaccion = new FRNTransaccion();
 
         cargarCategoriasTransaccion();
         cargarMetasTransaccion();
+
+        if (metaPreseleccionada != null && vistaTransaccion.cmbmeta != null) {
+            for (int i = 0; i < vistaTransaccion.cmbmeta.getItemCount(); i++) {
+                Object item = vistaTransaccion.cmbmeta.getItemAt(i);
+                if (item instanceof Meta) {
+                    Meta m = (Meta) item;
+                    if (m.getId() == metaPreseleccionada.getId()) {
+                        vistaTransaccion.cmbmeta.setSelectedIndex(i);
+                        break;
+                    }
+                }
+            }
+            if (vistaTransaccion.cmbtipo != null) {
+                vistaTransaccion.cmbtipo.setSelectedItem("Egreso");
+            }
+        }
 
         vistaTransaccion.btnguardar.addActionListener(new GuardarTransaccionAction());
 
