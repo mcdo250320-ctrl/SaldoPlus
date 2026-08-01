@@ -349,24 +349,24 @@ public class userController {
     private void cargarTablaMetas() {
         if (SesionUsuario.getUsuarioActual() == null) return;
 
+        isUpdatingTable = true;
         int idUsuario = SesionUsuario.getUsuarioActual().getId();
         MetaDB db = new MetaDB();
         listaMetasUsuario = db.obtenerMetasPorUsuario(idUsuario);
 
         DefaultTableModel model = new DefaultTableModel(
                 new Object[][]{},
-                new String[]{"ID", "Descripción", "Monto Objetivo", "Fecha Límite"}
+                new String[]{"Descripción", "Monto Objetivo", "Fecha Límite"}
         ) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false;
+                return true;
             }
         };
 
         if (listaMetasUsuario != null) {
             for (Meta m : listaMetasUsuario) {
                 model.addRow(new Object[]{
-                    m.getId(),
                     m.getDescrip(),
                     String.format("$ %.2f", m.getMonto()),
                     m.getFecha() != null ? m.getFecha() : "Sin fecha"
@@ -377,6 +377,47 @@ public class userController {
         if (vistaMeta.tablaMetas != null) {
             vistaMeta.tablaMetas.setModel(model);
 
+            model.addTableModelListener(new TableModelListener() {
+                @Override
+                public void tableChanged(TableModelEvent e) {
+                    if (isUpdatingTable) return;
+
+                    if (e.getType() == TableModelEvent.UPDATE) {
+                        int fila = e.getFirstRow();
+                        int columna = e.getColumn();
+
+                        if (fila >= 0 && fila < listaMetasUsuario.size()) {
+                            Meta meta = listaMetasUsuario.get(fila);
+                            Object nuevoValor = model.getValueAt(fila, columna);
+
+                            if (nuevoValor == null) return;
+
+                            try {
+                                if (columna == 0) {
+                                    meta.setDescrip(nuevoValor.toString().trim());
+                                } else if (columna == 1) {
+                                    String montoClean = nuevoValor.toString().replace("$", "").replace(",", "").trim();
+                                    meta.setMonto(Float.parseFloat(montoClean));
+                                } else if (columna == 2) {
+                                    meta.setFecha(nuevoValor.toString().trim());
+                                }
+
+                                MetaDB mdb = new MetaDB();
+                                if (mdb.actualizarMeta(meta)) {
+                                    actualizarTarjetaProgresoMeta(meta);
+                                } else {
+                                    JOptionPane.showMessageDialog(vistaMeta, "Error al actualizar la meta en la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
+                                    cargarTablaMetas();
+                                }
+                            } catch (Exception ex) {
+                                JOptionPane.showMessageDialog(vistaMeta, "Formato de dato ingresado no válido.", "Error", JOptionPane.ERROR_MESSAGE);
+                                cargarTablaMetas();
+                            }
+                        }
+                    }
+                }
+            });
+
             if (listaMetasUsuario != null && !listaMetasUsuario.isEmpty()) {
                 vistaMeta.tablaMetas.setRowSelectionInterval(0, 0);
                 metaSeleccionadaActual = listaMetasUsuario.get(0);
@@ -385,6 +426,7 @@ public class userController {
                 limpiarTarjetaProgresoMeta();
             }
         }
+        isUpdatingTable = false;
     }
 
     private void guardarNuevaMeta() {
@@ -572,6 +614,37 @@ public class userController {
                     vistaPerfil.txtPassNueva.setText("");
                 } else {
                     JOptionPane.showMessageDialog(vistaPerfil, "Error al actualizar la contraseña.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            });
+        }
+
+        if (vistaPerfil.btnEliminarCuenta != null) {
+            vistaPerfil.btnEliminarCuenta.addActionListener(e -> {
+                if (usuarioActual == null) return;
+
+                int confirm = JOptionPane.showConfirmDialog(
+                        vistaPerfil,
+                        "¿Está seguro de que desea eliminar su cuenta permanentemente?\nEsta acción borra su cuenta y todos sus registros.",
+                        "Confirmar Eliminación de Cuenta",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.WARNING_MESSAGE
+                );
+
+                if (confirm == JOptionPane.YES_OPTION) {
+                    UserDB udb = new UserDB();
+                    if (udb.eliminarUsuario(usuarioActual.getId())) {
+                        JOptionPane.showMessageDialog(vistaPerfil, "Su cuenta ha sido eliminada correctamente.");
+                        SesionUsuario.cerrarSesion();
+                        vistaPerfil.dispose();
+                        
+                        if (vistaInicio == null) {
+                            vistaInicio = new FRNInicio();
+                        }
+                        vistaInicio.setVisible(true);
+                        vistaInicio.setLocationRelativeTo(null);
+                    } else {
+                        JOptionPane.showMessageDialog(vistaPerfil, "Error al intentar eliminar la cuenta.", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
                 }
             });
         }
@@ -1002,14 +1075,42 @@ public class userController {
         TransaccionDB tDB = new TransaccionDB();
         List<Object[]> datos = tDB.obtenerTransaccionesAvanzado(idUsuario, fInicio, fFin, filtroTipo, filtroCategoria);
 
-        javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) vistaHistorial.tablaHistorial.getModel();
-        model.setRowCount(0);
+        boolean tieneMetaAsignada = false;
+        if (datos != null) {
+            for (Object[] fila : datos) {
+                if (fila.length > 4 && fila[4] != null) {
+                    String metaVal = fila[4].toString().trim();
+                    if (!metaVal.isEmpty() && !metaVal.equalsIgnoreCase("Sin Meta") && !metaVal.equalsIgnoreCase("N/A")) {
+                        tieneMetaAsignada = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        String[] columnas = tieneMetaAsignada 
+                ? new String[]{"Fecha", "Tipo", "Categoría", "Monto", "Descripción", "Meta de Ahorro"}
+                : new String[]{"Fecha", "Tipo", "Categoría", "Monto", "Descripción"};
+
+        javax.swing.table.DefaultTableModel model = new javax.swing.table.DefaultTableModel(new Object[][]{}, columnas) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
 
         if (datos != null) {
             for (Object[] fila : datos) {
-                model.addRow(fila);
+                if (tieneMetaAsignada) {
+                    Object metaDesc = (fila.length > 4 && fila[4] != null && !fila[4].toString().trim().isEmpty()) ? fila[4] : "N/A";
+                    model.addRow(new Object[]{fila[0], fila[1], fila[2], fila[3], fila.length > 5 ? fila[5] : "", metaDesc});
+                } else {
+                    model.addRow(new Object[]{fila[0], fila[1], fila[2], fila[3], fila.length > 5 ? fila[5] : (fila.length > 4 ? fila[4] : "")});
+                }
             }
         }
+
+        vistaHistorial.tablaHistorial.setModel(model);
     }
 
     public void abrirPantallaAdmin() {

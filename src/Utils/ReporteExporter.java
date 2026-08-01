@@ -6,311 +6,343 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PiePlot;
+import org.jfree.data.general.DefaultPieDataset;
 
 import javax.swing.JTable;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
-import java.text.NumberFormat;
+import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Locale;
 
 public class ReporteExporter {
 
+    private static final Color VERDE_SACRAMENTO = new Color(0, 51, 25);
+    private static final Color VERDE_INGRESO = new Color(34, 139, 34);
+    private static final Color ROJO_EGRESO = new Color(178, 34, 34);
+    private static final Color GRIS_FONDO = new Color(245, 245, 245);
+
     public static boolean exportarExcel(JTable tabla, File archivo) {
-        String ruta = archivo.getAbsolutePath();
-        if (!ruta.toLowerCase().endsWith(".csv") && !ruta.toLowerCase().endsWith(".xlsx")) {
-            archivo = new File(ruta + ".csv");
-        } else if (ruta.toLowerCase().endsWith(".xlsx")) {
-            archivo = new File(ruta.substring(0, ruta.length() - 5) + ".csv");
-        }
+        try (Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("Historial_Transacciones");
 
-        try (PrintWriter writer = new PrintWriter(archivo, StandardCharsets.UTF_8)) {
-            writer.write('\ufeff'); 
+            CellStyle titleStyle = workbook.createCellStyle();
+            org.apache.poi.ss.usermodel.Font titleFont = workbook.createFont();
+            titleFont.setBold(true);
+            titleFont.setFontHeightInPoints((short) 14);
+            titleStyle.setFont(titleFont);
 
-            int colCount = tabla.getColumnCount();
-            for (int col = 0; col < colCount; col++) {
-                writer.print("\"" + tabla.getColumnName(col) + "\"");
-                if (col < colCount - 1) writer.print(",");
+            Row titleRow = sheet.createRow(0);
+            Cell titleCell = titleRow.createCell(0);
+            titleCell.setCellValue("REPORTE FINANCIERO DE TRANSACCIONES - SALDO+");
+            titleCell.setCellStyle(titleStyle);
+
+            CellStyle headerStyle = workbook.createCellStyle();
+            org.apache.poi.ss.usermodel.Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerFont.setColor(IndexedColors.WHITE.getIndex());
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.DARK_GREEN.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            Row headerRow = sheet.createRow(2);
+            for (int col = 0; col < tabla.getColumnCount(); col++) {
+                Cell cell = headerRow.createCell(col);
+                cell.setCellValue(tabla.getColumnName(col));
+                cell.setCellStyle(headerStyle);
             }
-            writer.println();
 
-            int rowCount = tabla.getRowCount();
-            for (int row = 0; row < rowCount; row++) {
-                for (int col = 0; col < colCount; col++) {
-                    Object val = tabla.getValueAt(row, col);
-                    String texto = val != null ? val.toString().replace("\"", "\"\"") : "";
-                    writer.print("\"" + texto + "\"");
-                    if (col < colCount - 1) writer.print(",");
+            double totalIngresos = 0;
+            double totalEgresos = 0;
+
+            for (int row = 0; row < tabla.getRowCount(); row++) {
+                Row dataRow = sheet.createRow(row + 3);
+                for (int col = 0; col < tabla.getColumnCount(); col++) {
+                    Cell cell = dataRow.createCell(col);
+                    Object value = tabla.getValueAt(row, col);
+                    String valStr = value != null ? value.toString() : "";
+                    cell.setCellValue(valStr);
+
+                    if (tabla.getColumnName(col).equalsIgnoreCase("Tipo")) {
+                        Object montoVal = tabla.getValueAt(row, getColumnIndex(tabla, "Monto"));
+                        if (montoVal != null) {
+                            double montoClean = parseMonto(montoVal.toString());
+                            if (valStr.equalsIgnoreCase("Ingreso")) {
+                                totalIngresos += montoClean;
+                            } else if (valStr.equalsIgnoreCase("Egreso")) {
+                                totalEgresos += montoClean;
+                            }
+                        }
+                    }
                 }
-                writer.println();
             }
 
+            int lastRow = tabla.getRowCount() + 4;
+            Row summaryRow1 = sheet.createRow(lastRow++);
+            summaryRow1.createCell(0).setCellValue("TOTAL INGRESOS (+):");
+            summaryRow1.createCell(1).setCellValue(String.format("$ %.2f", totalIngresos));
+
+            Row summaryRow2 = sheet.createRow(lastRow++);
+            summaryRow2.createCell(0).setCellValue("TOTAL EGRESOS (-):");
+            summaryRow2.createCell(1).setCellValue(String.format("$ %.2f", totalEgresos));
+
+            Row summaryRow3 = sheet.createRow(lastRow);
+            summaryRow3.createCell(0).setCellValue("BALANCE NETO:");
+            summaryRow3.createCell(1).setCellValue(String.format("$ %.2f", (totalIngresos - totalEgresos)));
+
+            for (int col = 0; col < tabla.getColumnCount(); col++) {
+                sheet.autoSizeColumn(col);
+            }
+
+            try (FileOutputStream fos = new FileOutputStream(archivo)) {
+                workbook.write(fos);
+            }
             return true;
         } catch (Exception e) {
-            System.err.println("Error exportando a Excel: " + e.getMessage());
+            System.out.println("Error al exportar Excel: " + e.getMessage());
             return false;
         }
     }
 
     public static boolean exportarPDF(JTable tabla, File archivo) {
-        String ruta = archivo.getAbsolutePath();
-        if (!ruta.toLowerCase().endsWith(".pdf")) {
-            archivo = new File(ruta + ".pdf");
-        }
-
-        int rowCount = tabla.getRowCount();
-        int colCount = tabla.getColumnCount();
-
-        int colTipoIdx = -1;
-        int colMontoIdx = -1;
-
-        for (int c = 0; c < colCount; c++) {
-            String colName = tabla.getColumnName(c).trim().toLowerCase();
-            if (colName.contains("tipo")) colTipoIdx = c;
-            if (colName.contains("monto") || colName.contains("cantidad")) colMontoIdx = c;
-        }
-
-        double totalIngresos = 0.0;
-        double totalEgresos = 0.0;
-        int numIngresos = 0;
-        int numEgresos = 0;
-
-        for (int row = 0; row < rowCount; row++) {
-            String tipoVal = "";
-            double montoVal = 0.0;
-
-            if (colTipoIdx != -1 && tabla.getValueAt(row, colTipoIdx) != null) {
-                tipoVal = tabla.getValueAt(row, colTipoIdx).toString().trim().toLowerCase();
-            }
-
-            if (colMontoIdx != -1 && tabla.getValueAt(row, colMontoIdx) != null) {
-                try {
-                    String strMonto = tabla.getValueAt(row, colMontoIdx).toString().replaceAll("[^0-9.-]", "");
-                    montoVal = Double.parseDouble(strMonto);
-                } catch (Exception ignored) {}
-            }
-
-            if (tipoVal.contains("egreso") || tipoVal.contains("gasto") || montoVal < 0) {
-                totalEgresos += Math.abs(montoVal);
-                numEgresos++;
-            } else {
-                totalIngresos += Math.abs(montoVal);
-                numIngresos++;
-            }
-        }
-
-        double balanceNeto = totalIngresos - totalEgresos;
-        double tasaRetencion = totalIngresos > 0 ? (balanceNeto / totalIngresos) * 100 : 0;
-        double ticketPromedio = rowCount > 0 ? (totalIngresos + totalEgresos) / rowCount : 0;
-
-        NumberFormat formatoMoneda = NumberFormat.getCurrencyInstance(new Locale("es", "MX"));
-
         try (PDDocument document = new PDDocument()) {
             PDPage page = new PDPage();
             document.addPage(page);
 
-            PDPageContentStream content = new PDPageContentStream(document, page);
+            double totalIngresos = 0;
+            double totalEgresos = 0;
+            int countIngresos = 0;
+            int countEgresos = 0;
+            int totalRegistros = tabla.getRowCount();
 
-            content.setNonStrokingColor(25, 118, 210);
-            content.addRect(40, 720, 532, 42);
-            content.fill();
+            int colMontoIdx = getColumnIndex(tabla, "Monto");
+            int colTipoIdx = getColumnIndex(tabla, "Tipo");
 
-            content.beginText();
-            content.setFont(PDType1Font.HELVETICA_BOLD, 15);
-            content.setNonStrokingColor(Color.WHITE);
-            content.newLineAtOffset(55, 734);
-            content.showText("REPORTE FINANCIERO DE TRANSACCIONES");
-            content.endText();
+            for (int row = 0; row < totalRegistros; row++) {
+                String tipo = (colTipoIdx != -1 && tabla.getValueAt(row, colTipoIdx) != null) ? tabla.getValueAt(row, colTipoIdx).toString() : "";
+                String montoStr = (colMontoIdx != -1 && tabla.getValueAt(row, colMontoIdx) != null) ? tabla.getValueAt(row, colMontoIdx).toString() : "0";
+                double monto = parseMonto(montoStr);
 
-            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
-            content.beginText();
-            content.setFont(PDType1Font.HELVETICA_OBLIQUE, 9);
-            content.setNonStrokingColor(100, 100, 100);
-            content.newLineAtOffset(40, 705);
-            content.showText("Emisión: " + sdf.format(new Date()) + " | Registros analizados: " + rowCount);
-            content.endText();
-
-            int boxY = 645;
-            int boxWidth = 170;
-            int boxHeight = 48;
-
-            // Ingresos
-            dibujarCajaMétrica(content, 40, boxY, boxWidth, boxHeight, "TOTAL INGRESOS (+)", formatoMoneda.format(totalIngresos), new Color(46, 125, 50), new Color(235, 247, 238));
-            // Egresos
-            dibujarCajaMétrica(content, 221, boxY, boxWidth, boxHeight, "TOTAL EGRESOS (-)", formatoMoneda.format(totalEgresos), new Color(198, 40, 40), new Color(253, 237, 237));
-            // Balance
-            dibujarCajaMétrica(content, 402, boxY, boxWidth, boxHeight, "BALANCE NETO", formatoMoneda.format(balanceNeto), new Color(21, 101, 192), new Color(238, 242, 250));
-
-            BufferedImage pieChartImg = generarGraficoPastel(totalIngresos, totalEgresos);
-            if (pieChartImg != null) {
-                PDImageXObject pdImage = LosslessFactory.createFromImage(document, pieChartImg);
-                content.drawImage(pdImage, 40, 490, 260, 145);
+                if (tipo.equalsIgnoreCase("Ingreso")) {
+                    totalIngresos += monto;
+                    countIngresos++;
+                } else if (tipo.equalsIgnoreCase("Egreso")) {
+                    totalEgresos += monto;
+                    countEgresos++;
+                }
             }
 
-            int panelX = 310;
-            int panelY = 490;
-            content.setNonStrokingColor(248, 249, 250);
-            content.addRect(panelX, panelY, 262, 145);
-            content.fill();
-            content.setStrokingColor(220, 224, 230);
-            content.addRect(panelX, panelY, 262, 145);
-            content.stroke();
+            double balance = totalIngresos - totalEgresos;
+            double promedio = totalRegistros > 0 ? (totalIngresos + totalEgresos) / totalRegistros : 0;
+            double retencion = totalIngresos > 0 ? (balance / totalIngresos) * 100 : 0;
 
-            content.beginText();
-            content.setFont(PDType1Font.HELVETICA_BOLD, 10);
-            content.setNonStrokingColor(33, 33, 33);
-            content.newLineAtOffset(panelX + 12, panelY + 125);
-            content.showText("RESUMEN OPERATIVO");
+            try (PDPageContentStream cs = new PDPageContentStream(document, page)) {
 
-            content.setFont(PDType1Font.HELVETICA, 9);
-            content.newLineAtOffset(0, -22);
-            content.showText("• Mov. de Ingreso: " + numIngresos + " transacciones");
-            content.newLineAtOffset(0, -18);
-            content.showText("• Mov. de Egreso: " + numEgresos + " transacciones");
-            content.newLineAtOffset(0, -18);
-            content.showText("• Promedio / Transacción: " + formatoMoneda.format(ticketPromedio));
-            content.newLineAtOffset(0, -18);
-            content.setFont(PDType1Font.HELVETICA_BOLD, 9);
-            content.showText("• Retención de Capital: " + String.format("%.1f%%", tasaRetencion));
-            content.endText();
+                cs.setNonStrokingColor(VERDE_SACRAMENTO);
+                cs.addRect(40, 720, 515, 45);
+                cs.fill();
 
-            int startX = 40;
-            int startY = 465;
-            int rowHeight = 20;
-            int tableWidth = 532;
-            int colWidth = tableWidth / Math.max(1, colCount);
+                cs.beginText();
+                cs.setFont(PDType1Font.HELVETICA_BOLD, 15);
+                cs.setNonStrokingColor(Color.WHITE);
+                cs.newLineAtOffset(55, 737);
+                cs.showText("REPORTE FINANCIERO DE TRANSACCIONES - SALDO+");
+                cs.endText();
 
-            content.setNonStrokingColor(230, 235, 245);
-            content.addRect(startX, startY - rowHeight, tableWidth, rowHeight);
-            content.fill();
+                cs.beginText();
+                cs.setFont(PDType1Font.HELVETICA_OBLIQUE, 9);
+                cs.setNonStrokingColor(Color.DARK_GRAY);
+                cs.newLineAtOffset(40, 705);
+                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+                cs.showText("Emision: " + sdf.format(new Date()) + " | Registros analizados: " + totalRegistros);
+                cs.endText();
 
-            content.setFont(PDType1Font.HELVETICA_BOLD, 9);
-            content.setNonStrokingColor(Color.BLACK);
+                drawCard(cs, 40, 640, 160, 50, "TOTAL INGRESOS (+)", String.format("$ %.2f", totalIngresos), VERDE_INGRESO, new Color(240, 248, 240));
+                drawCard(cs, 215, 640, 160, 50, "TOTAL EGRESOS (-)", String.format("$ %.2f", totalEgresos), ROJO_EGRESO, new Color(253, 242, 242));
+                drawCard(cs, 390, 640, 165, 50, "BALANCE NETO", String.format("$ %.2f", balance), VERDE_SACRAMENTO, new Color(240, 245, 242));
 
-            for (int col = 0; col < colCount; col++) {
-                content.beginText();
-                content.newLineAtOffset(startX + (col * colWidth) + 5, startY - 14);
-                content.showText(tabla.getColumnName(col));
-                content.endText();
-            }
-
-            int currentY = startY - rowHeight;
-            content.setFont(PDType1Font.HELVETICA, 8);
-
-            for (int row = 0; row < rowCount; row++) {
-                currentY -= rowHeight;
-
-                if (currentY < 45) {
-                    content.close();
-                    page = new PDPage();
-                    document.addPage(page);
-                    content = new PDPageContentStream(document, page);
-                    currentY = 720;
-
-                    content.setNonStrokingColor(230, 235, 245);
-                    content.addRect(startX, currentY, tableWidth, rowHeight);
-                    content.fill();
-
-                    content.setFont(PDType1Font.HELVETICA_BOLD, 9);
-                    content.setNonStrokingColor(Color.BLACK);
-                    for (int col = 0; col < colCount; col++) {
-                        content.beginText();
-                        content.newLineAtOffset(startX + (col * colWidth) + 5, currentY + 5);
-                        content.showText(tabla.getColumnName(col));
-                        content.endText();
-                    }
-                    currentY -= rowHeight;
-                    content.setFont(PDType1Font.HELVETICA, 8);
+                BufferedImage chartImage = generarGraficoPastel(totalIngresos, totalEgresos);
+                if (chartImage != null) {
+                    PDImageXObject pdChart = LosslessFactory.createFromImage(document, chartImage);
+                    cs.drawImage(pdChart, 40, 480, 250, 150);
                 }
 
-                if (row % 2 == 0) {
-                    content.setNonStrokingColor(250, 250, 250);
-                    content.addRect(startX, currentY, tableWidth, rowHeight);
-                    content.fill();
+                cs.setNonStrokingColor(GRIS_FONDO);
+                cs.addRect(300, 480, 255, 150);
+                cs.fill();
+
+                cs.setStrokingColor(new Color(220, 220, 220));
+                cs.setLineWidth(1.0f);
+                cs.addRect(300, 480, 255, 150);
+                cs.stroke();
+
+                cs.beginText();
+                cs.setFont(PDType1Font.HELVETICA_BOLD, 11);
+                cs.setNonStrokingColor(Color.BLACK);
+                cs.newLineAtOffset(315, 608);
+                cs.showText("RESUMEN OPERATIVO");
+                cs.endText();
+
+                cs.setFont(PDType1Font.HELVETICA, 9);
+                int textY = 588;
+                drawBulletText(cs, 315, textY, "Mov. de Ingreso: " + countIngresos + " transacciones");
+                textY -= 18;
+                drawBulletText(cs, 315, textY, "Mov. de Egreso: " + countEgresos + " transacciones");
+                textY -= 18;
+                drawBulletText(cs, 315, textY, String.format("Promedio / Transaccion: $ %.2f", promedio));
+                textY -= 18;
+                drawBulletText(cs, 315, textY, String.format("Retencion de Capital: %.1f%%", retencion));
+
+                int numColumnas = tabla.getColumnCount();
+                float[] xPos;
+                int[] maxChars;
+
+                if (numColumnas >= 6) {
+                    xPos = new float[]{45, 110, 160, 240, 315, 415};
+                    maxChars = new int[]{10, 8, 12, 12, 16, 20};
+                } else {
+                    xPos = new float[]{45, 120, 180, 270, 360};
+                    maxChars = new int[]{12, 10, 15, 15, 25};
                 }
 
-                content.setNonStrokingColor(Color.DARK_GRAY);
-                for (int col = 0; col < colCount; col++) {
-                    Object val = tabla.getValueAt(row, col);
-                    String texto = val != null ? val.toString().replaceAll("\r?\n", " ") : "";
+                int tableY = 440;
+                cs.setNonStrokingColor(new Color(230, 238, 233));
+                cs.addRect(40, tableY, 515, 20);
+                cs.fill();
 
-                    if (texto.length() > 22) {
-                        texto = texto.substring(0, 19) + "...";
+                cs.setFont(PDType1Font.HELVETICA_BOLD, 8);
+                cs.setNonStrokingColor(VERDE_SACRAMENTO);
+                for (int col = 0; col < numColumnas && col < xPos.length; col++) {
+                    cs.beginText();
+                    cs.newLineAtOffset(xPos[col], tableY + 6);
+                    cs.showText(tabla.getColumnName(col));
+                    cs.endText();
+                }
+
+                tableY -= 18;
+                cs.setFont(PDType1Font.HELVETICA, 8);
+
+                for (int row = 0; row < totalRegistros; row++) {
+                    if (tableY < 40) break;
+
+                    if (row % 2 == 1) {
+                        cs.setNonStrokingColor(new Color(248, 248, 248));
+                        cs.addRect(40, tableY - 4, 515, 16);
+                        cs.fill();
                     }
 
-                    content.beginText();
-                    content.newLineAtOffset(startX + (col * colWidth) + 5, currentY + 5);
-                    content.showText(texto);
-                    content.endText();
-                }
+                    cs.setNonStrokingColor(Color.BLACK);
+                    for (int col = 0; col < numColumnas && col < xPos.length; col++) {
+                        Object val = tabla.getValueAt(row, col);
+                        String txt = val != null ? val.toString().trim() : "";
+                        int limit = maxChars[col];
+                        if (txt.length() > limit) {
+                            txt = txt.substring(0, Math.max(0, limit - 3)) + "...";
+                        }
 
-                content.setStrokingColor(230, 230, 230);
-                content.moveTo(startX, currentY);
-                content.lineTo(startX + tableWidth, currentY);
-                content.stroke();
+                        cs.beginText();
+                        cs.newLineAtOffset(xPos[col], tableY);
+                        cs.showText(txt);
+                        cs.endText();
+                    }
+
+                    tableY -= 16;
+                }
             }
 
-            content.close();
             document.save(archivo);
             return true;
         } catch (Exception e) {
-            System.err.println("Error generando reporte PDF profesional: " + e.getMessage());
-            e.printStackTrace();
+            System.out.println("Error al exportar PDF profesional: " + e.getMessage());
             return false;
         }
     }
 
-    private static void dibujarCajaMétrica(PDPageContentStream content, int x, int y, int w, int h, String titulo, String valor, Color colorTexto, Color colorFondo) throws Exception {
-        content.setNonStrokingColor(colorFondo);
-        content.addRect(x, y, w, h);
-        content.fill();
-        content.setStrokingColor(colorTexto);
-        content.addRect(x, y, w, h);
-        content.stroke();
-
-        content.beginText();
-        content.setFont(PDType1Font.HELVETICA_BOLD, 8);
-        content.setNonStrokingColor(colorTexto);
-        content.newLineAtOffset(x + 10, y + 30);
-        content.showText(titulo);
-        content.setFont(PDType1Font.HELVETICA_BOLD, 12);
-        content.newLineAtOffset(0, -16);
-        content.showText(valor);
-        content.endText();
-    }
-
     private static BufferedImage generarGraficoPastel(double ingresos, double egresos) {
         try {
-            org.jfree.data.general.DefaultPieDataset dataset = new org.jfree.data.general.DefaultPieDataset();
+            DefaultPieDataset dataset = new DefaultPieDataset();
             dataset.setValue("Ingresos", ingresos);
             dataset.setValue("Egresos", egresos);
 
-            JFreeChart chart = ChartFactory.createPieChart(
-                    "Distribución del Flujo",
-                    dataset,
-                    true,
-                    false,
-                    false
-            );
+            JFreeChart chart = ChartFactory.createPieChart("Distribución del Flujo", dataset, true, false, false);
+            chart.setBackgroundPaint(Color.WHITE);
 
             PiePlot plot = (PiePlot) chart.getPlot();
-            plot.setSectionPaint("Ingresos", new Color(46, 125, 50));
-            plot.setSectionPaint("Egresos", new Color(198, 40, 40));
             plot.setBackgroundPaint(Color.WHITE);
             plot.setOutlineVisible(false);
+            plot.setSectionPaint("Ingresos", VERDE_INGRESO);
+            plot.setSectionPaint("Egresos", ROJO_EGRESO);
             plot.setLabelGenerator(null);
 
-            return chart.createBufferedImage(500, 280);
+            return chart.createBufferedImage(250, 150);
         } catch (Exception e) {
-            System.err.println("Error al renderizar gráfico JFreeChart: " + e.getMessage());
+            System.out.println("Error generando gráfico de pastel: " + e.getMessage());
             return null;
+        }
+    }
+
+    private static void drawCard(PDPageContentStream cs, float x, float y, float width, float height, String title, String value, Color textColor, Color bgColor) throws Exception {
+        cs.setNonStrokingColor(bgColor);
+        cs.addRect(x, y, width, height);
+        cs.fill();
+
+        cs.setStrokingColor(textColor);
+        cs.setLineWidth(1.0f);
+        cs.addRect(x, y, width, height);
+        cs.stroke();
+
+        cs.beginText();
+        cs.setFont(PDType1Font.HELVETICA_BOLD, 8);
+        cs.setNonStrokingColor(textColor);
+        cs.newLineAtOffset(x + 10, y + height - 16);
+        cs.showText(title);
+        cs.endText();
+
+        cs.beginText();
+        cs.setFont(PDType1Font.HELVETICA_BOLD, 13);
+        cs.setNonStrokingColor(textColor);
+        cs.newLineAtOffset(x + 10, y + 12);
+        cs.showText(value);
+        cs.endText();
+    }
+
+    private static void drawBulletText(PDPageContentStream cs, float x, float y, String text) throws Exception {
+        cs.beginText();
+        cs.setNonStrokingColor(Color.DARK_GRAY);
+        cs.newLineAtOffset(x, y);
+        cs.showText("• " + text);
+        cs.endText();
+    }
+
+    private static int getColumnIndex(JTable table, String colName) {
+        for (int i = 0; i < table.getColumnCount(); i++) {
+            if (table.getColumnName(i).equalsIgnoreCase(colName)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static double parseMonto(String montoStr) {
+        try {
+            String clean = montoStr.replace("$", "").replace(",", "").trim();
+            return Double.parseDouble(clean);
+        } catch (Exception e) {
+            return 0.0;
         }
     }
 }

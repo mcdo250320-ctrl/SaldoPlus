@@ -1,7 +1,10 @@
 package Model;
 
 import Conection.ConectionDB;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,93 +12,89 @@ public class TransaccionDB {
 
     public boolean insertarTransaccion(Transaccion t) {
         String sql = "INSERT INTO transaccion (monto, tipo, descripcion, id_categoria, id_meta, id_usuario) VALUES (?, ?, ?, ?, ?, ?)";
-        try (Connection conn = ConectionDB.conexion();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setFloat(1, t.getMonto());
-            stmt.setString(2, t.getTipo());
-            stmt.setString(3, t.getDescripcion());
+        try (Connection con = ConectionDB.conexion();
+             PreparedStatement ps = con.prepareStatement(sql)) {
 
-            if (t.getId_categoria() > 0) {
-                stmt.setInt(4, t.getId_categoria());
-            } else {
-                stmt.setNull(4, Types.INTEGER);
-            }
+            ps.setFloat(1, t.getMonto());
+            ps.setString(2, t.getTipo());
+            ps.setString(3, t.getDescripcion());
+            ps.setInt(4, t.getId_categoria());
 
             if (t.getId_meta() > 0) {
-                stmt.setInt(5, t.getId_meta());
+                ps.setInt(5, t.getId_meta());
             } else {
-                stmt.setNull(5, Types.INTEGER);
+                ps.setNull(5, java.sql.Types.INTEGER);
             }
 
-            stmt.setInt(6, t.getId_usuario());
+            ps.setInt(6, t.getId_usuario());
 
-            return stmt.executeUpdate() > 0;
+            int filasAfectadas = ps.executeUpdate();
+            return filasAfectadas > 0;
+
         } catch (SQLException e) {
-            System.err.println("Error al insertar transacción: " + e.getMessage());
+            System.out.println("Error al insertar transacción: " + e.getMessage());
             return false;
         }
     }
 
-    public float obtenerTotalAhorradoPorMeta(int idMeta) {
-        float totalAhorrado = 0.0f;
-        String sql = "SELECT SUM(monto) AS total FROM transaccion WHERE id_meta = ?";
-
-        try (Connection conn = ConectionDB.conexion();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setInt(1, idMeta);
-            ResultSet rs = stmt.executeQuery();
-
-            if (rs.next()) {
-                totalAhorrado = rs.getFloat("total");
-            }
-        } catch (SQLException e) {
-            System.err.println("Error al obtener total ahorrado por meta: " + e.getMessage());
-        }
-
-        return totalAhorrado;
-    }
-
     public float[] obtenerTotalesPorUsuario(int idUsuario) {
         float[] totales = new float[3];
-        float ingresos = 0;
-        float egresos = 0;
-
         String sql = "SELECT tipo, SUM(monto) AS total FROM transaccion WHERE id_usuario = ? GROUP BY tipo";
 
-        try (Connection conn = ConectionDB.conexion();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection con = ConectionDB.conexion();
+             PreparedStatement ps = con.prepareStatement(sql)) {
 
-            stmt.setInt(1, idUsuario);
-            ResultSet rs = stmt.executeQuery();
-
-            while (rs.next()) {
-                String tipo = rs.getString("tipo");
-                float monto = rs.getFloat("total");
-
-                if ("Ingreso".equalsIgnoreCase(tipo)) {
-                    ingresos += monto;
-                } else if ("Egreso".equalsIgnoreCase(tipo)) {
-                    egresos += monto;
+            ps.setInt(1, idUsuario);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String tipo = rs.getString("tipo");
+                    float total = rs.getFloat("total");
+                    if ("Ingreso".equalsIgnoreCase(tipo)) {
+                        totales[0] = total;
+                    } else if ("Egreso".equalsIgnoreCase(tipo)) {
+                        totales[1] = total;
+                    }
                 }
             }
-        } catch (SQLException e) {
-            System.err.println("Error al obtener totales por usuario: " + e.getMessage());
-        }
+            totales[2] = totales[0] - totales[1];
 
-        totales[0] = ingresos;
-        totales[1] = egresos;
-        totales[2] = ingresos - egresos;
+        } catch (SQLException e) {
+            System.out.println("Error al obtener totales: " + e.getMessage());
+        }
 
         return totales;
     }
 
+    public float obtenerTotalAhorradoPorMeta(int idMeta) {
+        float total = 0;
+        String sql = "SELECT SUM(monto) AS total FROM transaccion WHERE id_meta = ?";
+
+        try (Connection con = ConectionDB.conexion();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, idMeta);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    total = rs.getFloat("total");
+                }
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Error al obtener total ahorrado por meta: " + e.getMessage());
+        }
+
+        return total;
+    }
+
     public List<Object[]> obtenerTransaccionesAvanzado(int idUsuario, java.util.Date fInicio, java.util.Date fFin, String tipo, String categorias) {
         List<Object[]> lista = new ArrayList<>();
-        StringBuilder sql = new StringBuilder("SELECT t.id_transaccion, t.monto, t.tipo, t.fecha, t.descripcion, c.nombre_categoria ");
+        StringBuilder sql = new StringBuilder();
+
+        sql.append("SELECT t.fecha, t.tipo, c.nombre AS categoria, t.monto, m.descripcion AS meta_desc, t.descripcion ");
         sql.append("FROM transaccion t ");
         sql.append("LEFT JOIN categoria c ON t.id_categoria = c.id_categoria ");
+        sql.append("LEFT JOIN meta m ON t.id_meta = m.id_meta ");
         sql.append("WHERE t.id_usuario = ? ");
 
         if (fInicio != null) {
@@ -104,63 +103,67 @@ public class TransaccionDB {
         if (fFin != null) {
             sql.append("AND t.fecha <= ? ");
         }
-        if (tipo != null && !tipo.equalsIgnoreCase("Todos")) {
+        if (!"Todos".equalsIgnoreCase(tipo)) {
             sql.append("AND t.tipo = ? ");
         }
-        if (categorias != null && !categorias.equalsIgnoreCase("Todas") && !categorias.trim().isEmpty()) {
-            String[] cats = categorias.split(",");
-            sql.append("AND c.nombre_categoria IN (");
-            for (int i = 0; i < cats.length; i++) {
+        if (!"Todas".equalsIgnoreCase(categorias) && !categorias.isEmpty()) {
+            String[] catArr = categorias.split(",");
+            sql.append("AND c.nombre IN (");
+            for (int i = 0; i < catArr.length; i++) {
                 sql.append("?");
-                if (i < cats.length - 1) sql.append(",");
+                if (i < catArr.length - 1) {
+                    sql.append(",");
+                }
             }
             sql.append(") ");
         }
 
-        try (Connection conn = ConectionDB.conexion();
-             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+        sql.append("ORDER BY t.fecha DESC");
+
+        try (Connection con = ConectionDB.conexion();
+             PreparedStatement ps = con.prepareStatement(sql.toString())) {
 
             int paramIndex = 1;
-            stmt.setInt(paramIndex++, idUsuario);
+            ps.setInt(paramIndex++, idUsuario);
 
             if (fInicio != null) {
-                stmt.setTimestamp(paramIndex++, new java.sql.Timestamp(fInicio.getTime()));
+                ps.setDate(paramIndex++, new java.sql.Date(fInicio.getTime()));
             }
             if (fFin != null) {
-                stmt.setTimestamp(paramIndex++, new java.sql.Timestamp(fFin.getTime()));
+                ps.setDate(paramIndex++, new java.sql.Date(fFin.getTime()));
             }
-            if (tipo != null && !tipo.equalsIgnoreCase("Todos")) {
-                stmt.setString(paramIndex++, tipo);
+            if (!"Todos".equalsIgnoreCase(tipo)) {
+                ps.setString(paramIndex++, tipo);
             }
-            if (categorias != null && !categorias.equalsIgnoreCase("Todas") && !categorias.trim().isEmpty()) {
-                String[] cats = categorias.split(",");
-                for (String cat : cats) {
-                    stmt.setString(paramIndex++, cat.trim());
+            if (!"Todas".equalsIgnoreCase(categorias) && !categorias.isEmpty()) {
+                String[] catArr = categorias.split(",");
+                for (String cat : catArr) {
+                    ps.setString(paramIndex++, cat.trim());
                 }
             }
 
-            ResultSet rs = stmt.executeQuery();
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String fecha = rs.getString("fecha");
+                    String tipoTr = rs.getString("tipo");
+                    String catTr = rs.getString("categoria");
+                    float montoTr = rs.getFloat("monto");
+                    String metaTr = rs.getString("meta_desc");
+                    String descTr = rs.getString("descripcion");
 
-            while (rs.next()) {
-                int id = rs.getInt("id_transaccion");
-                float monto = rs.getFloat("monto");
-                String tTipo = rs.getString("tipo");
-                Timestamp fecha = rs.getTimestamp("fecha");
-                String desc = rs.getString("descripcion");
-                String catNombre = rs.getString("nombre_categoria");
-
-                lista.add(new Object[]{
-                    id,
-                    String.format("$ %.2f", monto),
-                    tTipo,
-                    fecha != null ? fecha.toString() : "",
-                    desc,
-                    catNombre != null ? catNombre : "Sin categoría"
-                });
+                    lista.add(new Object[]{
+                        fecha != null ? fecha : "",
+                        tipoTr != null ? tipoTr : "",
+                        catTr != null ? catTr : "General",
+                        String.format("$ %.2f", montoTr),
+                        metaTr != null ? metaTr : "",
+                        descTr != null ? descTr : ""
+                    });
+                }
             }
 
         } catch (SQLException e) {
-            System.err.println("Error al realizar consulta avanzada: " + e.getMessage());
+            System.out.println("Error al realizar consulta avanzada: " + e.getMessage());
         }
 
         return lista;
