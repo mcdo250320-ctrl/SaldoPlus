@@ -67,7 +67,6 @@ public class UserDB {
     }
 
     public User validarLogin(String usuario, String pass) {
-        // Incluimos la columna 'pass' para mantener el objeto completo en la SesionUsuario
         String sql = "SELECT id_usuario, nombre, usuario, pass, telefono, foto_url FROM Usuario WHERE usuario = ? AND pass = ?";
         try (Connection conn = ConectionDB.conexion(); PreparedStatement stmt = conn.prepareStatement(sql)) {
 
@@ -80,7 +79,7 @@ public class UserDB {
                 u.setId(rs.getInt("id_usuario"));
                 u.setNombre(rs.getString("nombre"));
                 u.setUsuario(rs.getString("usuario"));
-                u.setPass(rs.getString("pass")); // <-- IMPORTANTE: Asignamos pass
+                u.setPass(rs.getString("pass")); 
                 u.setTelefono(rs.getString("telefono"));
                 u.setFotoUrl(rs.getString("foto_url"));
                 return u;

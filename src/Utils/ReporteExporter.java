@@ -23,7 +23,6 @@ import java.util.Locale;
 
 public class ReporteExporter {
 
-    // Exportar a Excel (CSV con UTF-8 tomando solo datos FILTRADOS)
     public static boolean exportarExcel(JTable tabla, File archivo) {
         String ruta = archivo.getAbsolutePath();
         if (!ruta.toLowerCase().endsWith(".csv") && !ruta.toLowerCase().endsWith(".xlsx")) {
@@ -33,9 +32,8 @@ public class ReporteExporter {
         }
 
         try (PrintWriter writer = new PrintWriter(archivo, StandardCharsets.UTF_8)) {
-            writer.write('\ufeff'); // BOM para acentos en Excel
+            writer.write('\ufeff'); 
 
-            // Encabezados
             int colCount = tabla.getColumnCount();
             for (int col = 0; col < colCount; col++) {
                 writer.print("\"" + tabla.getColumnName(col) + "\"");
@@ -43,7 +41,6 @@ public class ReporteExporter {
             }
             writer.println();
 
-            // Filas visibles/filtradas
             int rowCount = tabla.getRowCount();
             for (int row = 0; row < rowCount; row++) {
                 for (int col = 0; col < colCount; col++) {
@@ -62,18 +59,15 @@ public class ReporteExporter {
         }
     }
 
-    // Exportar a PDF con Gráficas, KPIs y soporte para datos FILTRADOS
     public static boolean exportarPDF(JTable tabla, File archivo) {
         String ruta = archivo.getAbsolutePath();
         if (!ruta.toLowerCase().endsWith(".pdf")) {
             archivo = new File(ruta + ".pdf");
         }
 
-        // Usamos la JTable directamente para respetar filtros de búsqueda/sorter
         int rowCount = tabla.getRowCount();
         int colCount = tabla.getColumnCount();
 
-        // 1. Identificar columnas "Tipo" y "Monto"
         int colTipoIdx = -1;
         int colMontoIdx = -1;
 
@@ -83,7 +77,6 @@ public class ReporteExporter {
             if (colName.contains("monto") || colName.contains("cantidad")) colMontoIdx = c;
         }
 
-        // 2. Calcular Métricas Financieras sobre los datos filtrados
         double totalIngresos = 0.0;
         double totalEgresos = 0.0;
         int numIngresos = 0;
@@ -125,8 +118,7 @@ public class ReporteExporter {
 
             PDPageContentStream content = new PDPageContentStream(document, page);
 
-            // --- HEADER ---
-            content.setNonStrokingColor(25, 118, 210); // Azul ejecutivo
+            content.setNonStrokingColor(25, 118, 210);
             content.addRect(40, 720, 532, 42);
             content.fill();
 
@@ -137,7 +129,6 @@ public class ReporteExporter {
             content.showText("REPORTE FINANCIERO DE TRANSACCIONES");
             content.endText();
 
-            // Metadatos
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
             content.beginText();
             content.setFont(PDType1Font.HELVETICA_OBLIQUE, 9);
@@ -146,7 +137,6 @@ public class ReporteExporter {
             content.showText("Emisión: " + sdf.format(new Date()) + " | Registros analizados: " + rowCount);
             content.endText();
 
-            // --- TARJETAS KPI (Ingresos, Egresos, Balance) ---
             int boxY = 645;
             int boxWidth = 170;
             int boxHeight = 48;
@@ -158,15 +148,12 @@ public class ReporteExporter {
             // Balance
             dibujarCajaMétrica(content, 402, boxY, boxWidth, boxHeight, "BALANCE NETO", formatoMoneda.format(balanceNeto), new Color(21, 101, 192), new Color(238, 242, 250));
 
-            // --- SECCIÓN: GRÁFICA & METRICAS SECUNDARIAS ---
-            // Generar Gráfica de Pastel con JFreeChart
             BufferedImage pieChartImg = generarGraficoPastel(totalIngresos, totalEgresos);
             if (pieChartImg != null) {
                 PDImageXObject pdImage = LosslessFactory.createFromImage(document, pieChartImg);
                 content.drawImage(pdImage, 40, 490, 260, 145);
             }
 
-            // Panel de Indicadores Secundarios (KPIs) a la derecha del gráfico
             int panelX = 310;
             int panelY = 490;
             content.setNonStrokingColor(248, 249, 250);
@@ -194,14 +181,12 @@ public class ReporteExporter {
             content.showText("• Retención de Capital: " + String.format("%.1f%%", tasaRetencion));
             content.endText();
 
-            // --- TABLA DE TRANSACCIONES ---
             int startX = 40;
             int startY = 465;
             int rowHeight = 20;
             int tableWidth = 532;
             int colWidth = tableWidth / Math.max(1, colCount);
 
-            // Cabecera Tabla
             content.setNonStrokingColor(230, 235, 245);
             content.addRect(startX, startY - rowHeight, tableWidth, rowHeight);
             content.fill();
@@ -222,7 +207,6 @@ public class ReporteExporter {
             for (int row = 0; row < rowCount; row++) {
                 currentY -= rowHeight;
 
-                // Salto de Página Automático
                 if (currentY < 45) {
                     content.close();
                     page = new PDPage();
@@ -230,7 +214,6 @@ public class ReporteExporter {
                     content = new PDPageContentStream(document, page);
                     currentY = 720;
 
-                    // Re-dibujar encabezados en nueva página
                     content.setNonStrokingColor(230, 235, 245);
                     content.addRect(startX, currentY, tableWidth, rowHeight);
                     content.fill();
@@ -247,7 +230,6 @@ public class ReporteExporter {
                     content.setFont(PDType1Font.HELVETICA, 8);
                 }
 
-                // Cebra alternada
                 if (row % 2 == 0) {
                     content.setNonStrokingColor(250, 250, 250);
                     content.addRect(startX, currentY, tableWidth, rowHeight);
@@ -285,7 +267,6 @@ public class ReporteExporter {
         }
     }
 
-    // Auxiliar para dibujar tarjetas KPI
     private static void dibujarCajaMétrica(PDPageContentStream content, int x, int y, int w, int h, String titulo, String valor, Color colorTexto, Color colorFondo) throws Exception {
         content.setNonStrokingColor(colorFondo);
         content.addRect(x, y, w, h);
@@ -305,7 +286,6 @@ public class ReporteExporter {
         content.endText();
     }
 
-    // Auxiliar para construir la imagen del gráfico de pastel
     private static BufferedImage generarGraficoPastel(double ingresos, double egresos) {
         try {
             org.jfree.data.general.DefaultPieDataset dataset = new org.jfree.data.general.DefaultPieDataset();
@@ -325,7 +305,7 @@ public class ReporteExporter {
             plot.setSectionPaint("Egresos", new Color(198, 40, 40));
             plot.setBackgroundPaint(Color.WHITE);
             plot.setOutlineVisible(false);
-            plot.setLabelGenerator(null); // Diseño limpio sin etiquetas de mapa flotantes
+            plot.setLabelGenerator(null);
 
             return chart.createBufferedImage(500, 280);
         } catch (Exception e) {

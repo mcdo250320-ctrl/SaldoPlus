@@ -76,6 +76,29 @@ public class userController {
         label.repaint();
     }
 
+    private void cargarFotoEnVista(JLabel labelAvatar) {
+        if (labelAvatar == null) return;
+        
+        User usuarioActual = SesionUsuario.getUsuarioActual();
+        if (usuarioActual != null && usuarioActual.getFotoUrl() != null && !usuarioActual.getFotoUrl().trim().isEmpty()) {
+            aplicarImagenEscalada(labelAvatar, usuarioActual.getFotoUrl());
+        } else {
+            try {
+                java.net.URL defaultUrl = getClass().getResource("/Imagenes/default_avatar.png");
+                if (defaultUrl != null) {
+                    ImageIcon iconOriginal = new ImageIcon(defaultUrl);
+                    int ancho = labelAvatar.getWidth() > 0 ? labelAvatar.getWidth() : 120;
+                    int alto = labelAvatar.getHeight() > 0 ? labelAvatar.getHeight() : 120;
+                    Image imgEscalada = iconOriginal.getImage().getScaledInstance(ancho, alto, Image.SCALE_SMOOTH);
+                    labelAvatar.setIcon(new ImageIcon(imgEscalada));
+                }
+            } catch (Exception e) {
+                System.out.println("Error al cargar foto por defecto: " + e.getMessage());
+            }
+        }
+        labelAvatar.repaint();
+    }
+
     private void registrarEventosNavegacion(javax.swing.JButton btnInicio,
             javax.swing.JButton btnTransaccion,
             javax.swing.JButton btnMeta,
@@ -233,6 +256,8 @@ public class userController {
             vistaMain.lblBienvenido.setText("Bienvenido " + SesionUsuario.getUsuarioActual().getNombre());
         }
 
+        cargarFotoEnVista(vistaMain.avatarPerfil);
+
         if (vistaMain.btnCardTransaccion != null) {
             vistaMain.btnCardTransaccion.addActionListener(e -> {
                 vistaMain.dispose();
@@ -278,6 +303,7 @@ public class userController {
     public void abrirPantallaMeta() {
         vistaMeta = new FRNMeta();
 
+        cargarFotoEnVista(vistaMeta.avatarPerfil);
         cargarTablaMetas();
 
         if (vistaMeta.btnGenerarMeta != null) {
@@ -468,15 +494,12 @@ public class userController {
         vistaPerfil = new FRNPerfil();
         User usuarioActual = SesionUsuario.getUsuarioActual();
 
+        cargarFotoEnVista(vistaPerfil.avatarPerfil);
+
         if (usuarioActual != null) {
             vistaPerfil.txtNombre.setText(usuarioActual.getNombre());
             vistaPerfil.txtUsuario.setText(usuarioActual.getUsuario());
             vistaPerfil.txtTelefono.setText(usuarioActual.getTelefono() != null ? usuarioActual.getTelefono() : "");
-
-            if (vistaPerfil.avatarPerfil != null && usuarioActual.getFotoUrl() != null) {
-                aplicarImagenEscalada(vistaPerfil.avatarPerfil, usuarioActual.getFotoUrl());
-                vistaPerfil.avatarPerfil.repaint();
-            }
         }
 
         if (vistaPerfil.btnCambiarFoto != null) {
@@ -489,10 +512,7 @@ public class userController {
                     UserDB db = new UserDB();
                     if (db.actualizarFotoUsuario(usuarioActual.getId(), rutaGuardada)) {
                         usuarioActual.setFotoUrl(rutaGuardada);
-                        aplicarImagenEscalada(vistaPerfil.avatarPerfil, rutaGuardada);
-                        vistaPerfil.avatarPerfil.revalidate();
-                        vistaPerfil.avatarPerfil.repaint();
-                        vistaPerfil.repaint();
+                        cargarFotoEnVista(vistaPerfil.avatarPerfil);
                         JOptionPane.showMessageDialog(vistaPerfil, "¡Foto de perfil actualizada correctamente!");
                     } else {
                         JOptionPane.showMessageDialog(vistaPerfil, "Error al guardar la foto en la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -611,6 +631,7 @@ public class userController {
     public void abrirPantallaTransaccion(Meta metaPreseleccionada) {
         vistaTransaccion = new FRNTransaccion();
 
+        cargarFotoEnVista(vistaTransaccion.avatarPerfil);
         cargarCategoriasTransaccion();
         cargarMetasTransaccion();
 
@@ -836,6 +857,8 @@ public class userController {
 
     public void abrirPantallaHistorial() {
         vistaHistorial = new FrmHistorial();
+
+        cargarFotoEnVista(vistaHistorial.avatarPerfil);
 
         java.util.Calendar cal = java.util.Calendar.getInstance();
         java.util.Date hoy = cal.getTime();
