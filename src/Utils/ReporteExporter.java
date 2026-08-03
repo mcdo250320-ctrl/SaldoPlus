@@ -7,15 +7,6 @@ import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.FillPatternType;
-import org.apache.poi.ss.usermodel.IndexedColors;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PiePlot;
@@ -26,6 +17,8 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -37,83 +30,66 @@ public class ReporteExporter {
     private static final Color GRIS_FONDO = new Color(245, 245, 245);
 
     public static boolean exportarExcel(JTable tabla, File archivo) {
-        try (Workbook workbook = new XSSFWorkbook()) {
-            Sheet sheet = workbook.createSheet("Historial_Transacciones");
-
-            CellStyle titleStyle = workbook.createCellStyle();
-            org.apache.poi.ss.usermodel.Font titleFont = workbook.createFont();
-            titleFont.setBold(true);
-            titleFont.setFontHeightInPoints((short) 14);
-            titleStyle.setFont(titleFont);
-
-            Row titleRow = sheet.createRow(0);
-            Cell titleCell = titleRow.createCell(0);
-            titleCell.setCellValue("REPORTE FINANCIERO DE TRANSACCIONES - SALDO+");
-            titleCell.setCellStyle(titleStyle);
-
-            CellStyle headerStyle = workbook.createCellStyle();
-            org.apache.poi.ss.usermodel.Font headerFont = workbook.createFont();
-            headerFont.setBold(true);
-            headerFont.setColor(IndexedColors.WHITE.getIndex());
-            headerStyle.setFont(headerFont);
-            headerStyle.setFillForegroundColor(IndexedColors.DARK_GREEN.getIndex());
-            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-
-            Row headerRow = sheet.createRow(2);
-            for (int col = 0; col < tabla.getColumnCount(); col++) {
-                Cell cell = headerRow.createCell(col);
-                cell.setCellValue(tabla.getColumnName(col));
-                cell.setCellStyle(headerStyle);
+        try {
+            File archivoCsv = archivo;
+            if (!archivoCsv.getName().toLowerCase().endsWith(".csv")) {
+                archivoCsv = new File(archivo.getAbsolutePath() + ".csv");
             }
 
-            double totalIngresos = 0;
-            double totalEgresos = 0;
+            try (FileOutputStream fos = new FileOutputStream(archivoCsv);
+                 OutputStreamWriter osw = new OutputStreamWriter(fos, StandardCharsets.UTF_8)) {
 
-            for (int row = 0; row < tabla.getRowCount(); row++) {
-                Row dataRow = sheet.createRow(row + 3);
+                fos.write(0xEF);
+                fos.write(0xBB);
+                fos.write(0xBF);
+
+                osw.write("REPORTE FINANCIERO DE TRANSACCIONES - SALDO+\n\n");
+
+                StringBuilder headers = new StringBuilder();
                 for (int col = 0; col < tabla.getColumnCount(); col++) {
-                    Cell cell = dataRow.createCell(col);
-                    Object value = tabla.getValueAt(row, col);
-                    String valStr = value != null ? value.toString() : "";
-                    cell.setCellValue(valStr);
-
-                    if (tabla.getColumnName(col).equalsIgnoreCase("Tipo")) {
-                        Object montoVal = tabla.getValueAt(row, getColumnIndex(tabla, "Monto"));
-                        if (montoVal != null) {
-                            double montoClean = parseMonto(montoVal.toString());
-                            if (valStr.equalsIgnoreCase("Ingreso")) {
-                                totalIngresos += montoClean;
-                            } else if (valStr.equalsIgnoreCase("Egreso")) {
-                                totalEgresos += montoClean;
-                            }
-                        }
+                    headers.append("\"").append(tabla.getColumnName(col)).append("\"");
+                    if (col < tabla.getColumnCount() - 1) {
+                        headers.append(",");
                     }
                 }
-            }
+                osw.write(headers.toString() + "\n");
 
-            int lastRow = tabla.getRowCount() + 4;
-            Row summaryRow1 = sheet.createRow(lastRow++);
-            summaryRow1.createCell(0).setCellValue("TOTAL INGRESOS (+):");
-            summaryRow1.createCell(1).setCellValue(String.format("$ %.2f", totalIngresos));
+                double totalIngresos = 0;
+                double totalEgresos = 0;
+                int colMontoIdx = getColumnIndex(tabla, "Monto");
+                int colTipoIdx = getColumnIndex(tabla, "Tipo");
 
-            Row summaryRow2 = sheet.createRow(lastRow++);
-            summaryRow2.createCell(0).setCellValue("TOTAL EGRESOS (-):");
-            summaryRow2.createCell(1).setCellValue(String.format("$ %.2f", totalEgresos));
+                for (int row = 0; row < tabla.getRowCount(); row++) {
+                    StringBuilder dataRow = new StringBuilder();
+                    for (int col = 0; col < tabla.getColumnCount(); col++) {
+                        Object value = tabla.getValueAt(row, col);
+                        String valStr = value != null ? value.toString().replace("\"", "\"\"") : "";
+                        dataRow.append("\"").append(valStr).append("\"");
+                        if (col < tabla.getColumnCount() - 1) {
+                            dataRow.append(",");
+                        }
+                    }
+                    osw.write(dataRow.toString() + "\n");
 
-            Row summaryRow3 = sheet.createRow(lastRow);
-            summaryRow3.createCell(0).setCellValue("BALANCE NETO:");
-            summaryRow3.createCell(1).setCellValue(String.format("$ %.2f", (totalIngresos - totalEgresos)));
+                    String tipo = (colTipoIdx != -1 && tabla.getValueAt(row, colTipoIdx) != null) ? tabla.getValueAt(row, colTipoIdx).toString() : "";
+                    String montoStr = (colMontoIdx != -1 && tabla.getValueAt(row, colMontoIdx) != null) ? tabla.getValueAt(row, colMontoIdx).toString() : "0";
+                    double monto = parseMonto(montoStr);
 
-            for (int col = 0; col < tabla.getColumnCount(); col++) {
-                sheet.autoSizeColumn(col);
-            }
+                    if (tipo.equalsIgnoreCase("Ingreso")) {
+                        totalIngresos += monto;
+                    } else if (tipo.equalsIgnoreCase("Egreso")) {
+                        totalEgresos += monto;
+                    }
+                }
 
-            try (FileOutputStream fos = new FileOutputStream(archivo)) {
-                workbook.write(fos);
+                osw.write("\n");
+                osw.write("\"TOTAL INGRESOS (+)\",\"" + String.format("$ %.2f", totalIngresos) + "\"\n");
+                osw.write("\"TOTAL EGRESOS (-)\",\"" + String.format("$ %.2f", totalEgresos) + "\"\n");
+                osw.write("\"BALANCE NETO\",\"" + String.format("$ %.2f", (totalIngresos - totalEgresos)) + "\"\n");
             }
             return true;
         } catch (Exception e) {
-            System.out.println("Error al exportar Excel: " + e.getMessage());
+            System.out.println("Error al exportar reporte: " + e.getMessage());
             return false;
         }
     }

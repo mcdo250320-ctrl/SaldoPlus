@@ -228,7 +228,7 @@ public class userController {
                         SesionUsuario.setUsuarioActual(usuarioLogueado);
 
                         JOptionPane.showMessageDialog(vistaLogin,
-                                "¡Bienvenido de nuevo, " + usuarioLogueado.getNombre() + " a SaldoPlus!",
+                                "¡Bienvenido de nuevo, " + usuarioLogueado.getNombre() + " a Saldo+!",
                                 "Inicio de Sesión Exitoso",
                                 JOptionPane.INFORMATION_MESSAGE);
 

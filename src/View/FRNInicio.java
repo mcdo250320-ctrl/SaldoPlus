@@ -52,7 +52,7 @@ public class FRNInicio extends javax.swing.JFrame {
         btninicio.setBackground(new java.awt.Color(0, 51, 0));
         btninicio.setFont(new java.awt.Font("Nirmala UI", 1, 24)); // NOI18N
         btninicio.setForeground(new java.awt.Color(255, 255, 255));
-        btninicio.setText("Iniciar Sesion");
+        btninicio.setText("Iniciar sesión");
         btninicio.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
         btninicio.addActionListener(this::btninicioActionPerformed);
 
